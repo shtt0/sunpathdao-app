@@ -1,0 +1,98 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 20% 98%;
+    --foreground: 215 25% 27%;
+    
+    --card: 0 0% 100%;
+    --card-foreground: 215 25% 27%;
+    
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 25% 27%;
+    
+    --primary: 252 100% 69%;
+    --primary-foreground: 0 0% 100%;
+    
+    --primary-light: 252 100% 76%;
+    
+    --secondary: 122 42% 54%;
+    --secondary-foreground: 0 0% 100%;
+    
+    --accent: 33 100% 50%;
+    --accent-foreground: 0 0% 100%;
+    
+    --muted: 210 20% 96%;
+    --muted-foreground: 215 25% 40%;
+    
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 252 100% 69%;
+    
+    --radius: 0.5rem;
+  }
+ 
+  .dark {
+    --background: 215 32% 10%;
+    --foreground: 213 31% 91%;
+    
+    --card: 215 25% 15%;
+    --card-foreground: 213 31% 91%;
+    
+    --popover: 215 25% 15%;
+    --popover-foreground: 213 31% 91%;
+    
+    --primary: 252 100% 69%;
+    --primary-foreground: 0 0% 100%;
+    
+    --secondary: 122 42% 54%;
+    --secondary-foreground: 0 0% 100%;
+    
+    --accent: 33 100% 50%;
+    --accent-foreground: 0 0% 100%;
+    
+    --muted: 215 25% 23%;
+    --muted-foreground: 215 20% 65%;
+    
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    
+    --border: 215 25% 20%;
+    --input: 215 25% 20%;
+    --ring: 252 100% 69%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display;
+  }
+  
+  .font-display {
+    font-family: 'Space Grotesk', sans-serif;
+  }
+}
+
+@layer components {
+  .map-container {
+    @apply w-full h-96 rounded-lg bg-neutral-200;
+  }
+  
+  .video-container {
+    @apply relative w-full aspect-video rounded-lg bg-black overflow-hidden;
+  }
+}
