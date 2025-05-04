@@ -88,11 +88,78 @@
 }
 
 @layer components {
+  /* Map related styles */
   .map-container {
-    @apply w-full h-96 rounded-lg bg-neutral-200;
+    @apply w-full h-96 rounded-lg bg-neutral-200 shadow-md overflow-hidden border border-border;
   }
   
+  /* Video related styles */
   .video-container {
-    @apply relative w-full aspect-video rounded-lg bg-black overflow-hidden;
+    @apply relative w-full aspect-video rounded-lg bg-black overflow-hidden shadow-md;
+  }
+  
+  .record-button {
+    @apply flex items-center justify-center h-14 w-14 rounded-full bg-destructive text-white shadow-lg hover:bg-destructive/90 transition-all;
+  }
+  
+  .record-button.recording {
+    @apply animate-pulse bg-destructive;
+  }
+  
+  /* Card Styles */
+  .task-card {
+    @apply relative overflow-hidden rounded-lg border bg-card p-5 shadow-sm transition-all hover:shadow-md;
+  }
+  
+  .task-card:hover {
+    @apply translate-y-[-2px];
+  }
+  
+  /* Badge Styles */
+  .status-badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+  
+  .status-badge.available {
+    @apply bg-green-100 text-green-700;
+  }
+  
+  .status-badge.in-progress {
+    @apply bg-blue-100 text-blue-700;
+  }
+  
+  .status-badge.judging {
+    @apply bg-amber-100 text-amber-700;
+  }
+  
+  .status-badge.completed {
+    @apply bg-purple-100 text-purple-700;
+  }
+  
+  .status-badge.expired {
+    @apply bg-gray-100 text-gray-700;
+  }
+  
+  /* Section Styles */
+  .section-title {
+    @apply text-2xl font-bold text-foreground mb-6 font-display;
+  }
+  
+  .section-subtitle {
+    @apply text-lg font-medium text-foreground/90 mb-4 font-display;
+  }
+  
+  /* Gradient Styles */
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary-light;
+  }
+  
+  .bg-gradient {
+    @apply bg-gradient-to-r from-primary to-primary-light;
+  }
+  
+  /* Dashboard panels */
+  .dashboard-panel {
+    @apply p-5 rounded-lg border border-border bg-card;
   }
 }

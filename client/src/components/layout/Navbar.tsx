@@ -93,53 +93,59 @@ export default function Navbar() {
           <div className="pt-2 pb-3 space-y-1">
             {isConnected && (
               <>
-                <Link href="/commissioner/dashboard">
-                  <a className={cn(
+                <Link 
+                  href="/commissioner/dashboard"
+                  className={cn(
                     "block pl-3 pr-4 py-2 border-l-4 text-base font-medium",
                     isCommissionerView 
                       ? "bg-primary-light/10 border-primary text-primary" 
                       : "border-transparent text-neutral-500 hover:bg-neutral-50 hover:border-neutral-300 hover:text-neutral-700"
-                  )}>
-                    Commissioner View
-                  </a>
+                  )}
+                >
+                  Commissioner View
                 </Link>
-                <Link href="/runner/tasks">
-                  <a className={cn(
+                <Link 
+                  href="/runner/tasks"
+                  className={cn(
                     "block pl-3 pr-4 py-2 border-l-4 text-base font-medium",
                     isRunnerView 
                       ? "bg-primary-light/10 border-primary text-primary" 
                       : "border-transparent text-neutral-500 hover:bg-neutral-50 hover:border-neutral-300 hover:text-neutral-700"
-                  )}>
-                    Runner View
-                  </a>
+                  )}
+                >
+                  Runner View
                 </Link>
                 
                 {isCommissionerView && (
                   <>
-                    <Link href="/commissioner/dashboard">
-                      <a className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-neutral-500 hover:bg-neutral-50 hover:border-neutral-300 hover:text-neutral-700">
-                        Dashboard
-                      </a>
+                    <Link 
+                      href="/commissioner/dashboard"
+                      className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-neutral-500 hover:bg-neutral-50 hover:border-neutral-300 hover:text-neutral-700"
+                    >
+                      Dashboard
                     </Link>
-                    <Link href="/commissioner/create-task">
-                      <a className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-neutral-500 hover:bg-neutral-50 hover:border-neutral-300 hover:text-neutral-700">
-                        Create Task
-                      </a>
+                    <Link 
+                      href="/commissioner/create-task"
+                      className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-neutral-500 hover:bg-neutral-50 hover:border-neutral-300 hover:text-neutral-700"
+                    >
+                      Create Task
                     </Link>
                   </>
                 )}
                 
                 {isRunnerView && (
                   <>
-                    <Link href="/runner/tasks">
-                      <a className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-neutral-500 hover:bg-neutral-50 hover:border-neutral-300 hover:text-neutral-700">
-                        Available Tasks
-                      </a>
+                    <Link 
+                      href="/runner/tasks"
+                      className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-neutral-500 hover:bg-neutral-50 hover:border-neutral-300 hover:text-neutral-700"
+                    >
+                      Available Tasks
                     </Link>
-                    <Link href="/runner/my-tasks">
-                      <a className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-neutral-500 hover:bg-neutral-50 hover:border-neutral-300 hover:text-neutral-700">
-                        My Tasks
-                      </a>
+                    <Link 
+                      href="/runner/my-tasks"
+                      className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-neutral-500 hover:bg-neutral-50 hover:border-neutral-300 hover:text-neutral-700"
+                    >
+                      My Tasks
                     </Link>
                   </>
                 )}
