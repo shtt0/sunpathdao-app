@@ -77,25 +77,41 @@ export function WalletProvider({ children }: WalletProviderProps) {
       const phantom = (window as any).phantom?.solana;
       
       if (!phantom?.isPhantom) {
-        throw new Error('Phantom wallet not installed');
+        console.error('Phantom wallet extension not detected');
+        // Use alert to notify user since we don't have access to toast here
+        alert('Phantom wallet extension is not installed. Please install it from https://phantom.app/download');
+        setWalletStatus('disconnected');
+        return;
       }
+      
+      console.log('Attempting to connect to Phantom wallet');
       
       // Connect to wallet
       const { publicKey } = await phantom.connect();
       
       if (publicKey) {
         const address = publicKey.toString();
+        console.log('Connected to wallet:', address);
         setWalletAddress(address);
         setWalletStatus('connected');
         
         // Register or update user in the database
         await registerUser(address);
       } else {
+        console.error('No public key returned from wallet');
         setWalletStatus('disconnected');
       }
     } catch (error) {
       console.error('Connect error:', error);
       setWalletStatus('disconnected');
+      
+      // Show a more user-friendly error message
+      if (error instanceof Error) {
+        alert(`Failed to connect wallet: ${error.message}`);
+      } else {
+        alert('Failed to connect wallet. Please try again.');
+      }
+      
       throw error;
     }
   };

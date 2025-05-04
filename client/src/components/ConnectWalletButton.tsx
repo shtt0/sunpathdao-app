@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useWallet } from '@/contexts/WalletContext';
 import { Button } from '@/components/ui/button';
 import { formatWalletAddress } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,14 +12,57 @@ import {
 
 export default function ConnectWalletButton() {
   const { walletStatus, walletAddress, connectWallet, disconnectWallet } = useWallet();
+  const { toast } = useToast();
+  const [isPhantomInstalled, setIsPhantomInstalled] = useState<boolean>(() => {
+    return typeof window !== 'undefined' && !!(window as any).phantom?.solana;
+  });
   
   const handleConnect = async () => {
     try {
+      // Check if Phantom is installed first
+      if (!isPhantomInstalled) {
+        toast({
+          title: 'Wallet Not Found',
+          description: 'Phantom wallet extension is not installed. Would you like to install it?',
+          variant: 'destructive',
+          action: (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => window.open('https://phantom.app/download', '_blank')}
+            >
+              Install
+            </Button>
+          ),
+        });
+        return;
+      }
+      
       await connectWallet();
+      
+      toast({
+        title: 'Wallet Connected',
+        description: `Successfully connected to wallet: ${formatWalletAddress(walletAddress || '')}`,
+      });
     } catch (error) {
       console.error('Failed to connect wallet:', error);
-      // User can check console for detailed error
+      
+      toast({
+        title: 'Connection Failed',
+        description: error instanceof Error 
+          ? error.message 
+          : 'Could not connect to wallet. Please try again.',
+        variant: 'destructive',
+      });
     }
+  };
+  
+  const handleDisconnect = () => {
+    disconnectWallet();
+    toast({
+      title: 'Wallet Disconnected',
+      description: 'Your wallet has been disconnected',
+    });
   };
   
   // If wallet is connected, show address with dropdown to disconnect
@@ -32,7 +76,7 @@ export default function ConnectWalletButton() {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={disconnectWallet}>
+          <DropdownMenuItem onClick={handleDisconnect}>
             Disconnect Wallet
           </DropdownMenuItem>
         </DropdownMenuContent>
