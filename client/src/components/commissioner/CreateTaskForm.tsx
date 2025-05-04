@@ -61,6 +61,25 @@ export default function CreateTaskForm({ recreateTaskId }: CreateTaskFormProps) 
   const [mapInstance, setMapInstance] = useState<any>(null);
   const [route, setRoute] = useState<any>(null);
   const [isLockingFunds, setIsLockingFunds] = useState(false);
+  const [directionsRenderer, setDirectionsRenderer] = useState<any>(null);
+  const [startMarker, setStartMarker] = useState<any>(null);
+  const [endMarker, setEndMarker] = useState<any>(null);
+  const [locationSelectionMode, setLocationSelectionMode] = useState<'start' | 'end' | null>(null);
+  
+  // Initialize form
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      title: '',
+      description: '',
+      country: '',
+      city: '',
+      startLocation: '',
+      endLocation: '',
+      rewardAmount: 0.5,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16), // Default to 7 days in the future
+    },
+  });
 
   // Load Google Maps API
   useEffect(() => {
@@ -101,27 +120,106 @@ export default function CreateTaskForm({ recreateTaskId }: CreateTaskFormProps) 
       zoom: 14,
     });
 
+    // Create directions renderer once
+    const renderer = new window.google.maps.DirectionsRenderer({
+      draggable: true, // Allow route to be dragged/adjusted
+      map: map
+    });
+    setDirectionsRenderer(renderer);
+
+    // Add click listener to map for setting markers
+    map.addListener('click', (event: any) => {
+      const clickedLocation = event.latLng;
+      const geocoder = new window.google.maps.Geocoder();
+      
+      if (locationSelectionMode === 'start') {
+        // Clear previous start marker if it exists
+        if (startMarker) {
+          startMarker.setMap(null);
+        }
+        
+        // Create new start marker
+        const marker = new window.google.maps.Marker({
+          position: clickedLocation,
+          map: map,
+          title: 'Start Location',
+          label: 'S',
+          animation: window.google.maps.Animation.DROP
+        });
+        setStartMarker(marker);
+        
+        // Get address from coordinates and update form
+        geocoder.geocode({ location: clickedLocation }, (results: any, status: any) => {
+          if (status === 'OK' && results[0]) {
+            const address = results[0].formatted_address;
+            form.setValue('startLocation', address);
+            
+            // Try to update route if both locations are set
+            const endLocation = form.getValues('endLocation');
+            if (endLocation) {
+              displayRoute(address, endLocation);
+            }
+            
+            toast({
+              title: 'Start Location Set',
+              description: `Selected: ${address}`,
+            });
+          }
+        });
+        
+        // Reset selection mode
+        setLocationSelectionMode(null);
+      } 
+      else if (locationSelectionMode === 'end') {
+        // Clear previous end marker if it exists
+        if (endMarker) {
+          endMarker.setMap(null);
+        }
+        
+        // Create new end marker
+        const marker = new window.google.maps.Marker({
+          position: clickedLocation,
+          map: map,
+          title: 'End Location',
+          label: 'E',
+          animation: window.google.maps.Animation.DROP
+        });
+        setEndMarker(marker);
+        
+        // Get address from coordinates and update form
+        geocoder.geocode({ location: clickedLocation }, (results: any, status: any) => {
+          if (status === 'OK' && results[0]) {
+            const address = results[0].formatted_address;
+            form.setValue('endLocation', address);
+            
+            // Try to update route if both locations are set
+            const startLocation = form.getValues('startLocation');
+            if (startLocation) {
+              displayRoute(startLocation, address);
+            }
+            
+            toast({
+              title: 'End Location Set',
+              description: `Selected: ${address}`,
+            });
+          }
+        });
+        
+        // Reset selection mode
+        setLocationSelectionMode(null);
+      }
+    });
+
     setMapInstance(map);
 
     return () => {
-      // Cleanup map
+      // Cleanup - remove event listeners
+      window.google.maps.event.clearInstanceListeners(map);
+      if (startMarker) startMarker.setMap(null);
+      if (endMarker) endMarker.setMap(null);
+      if (directionsRenderer) directionsRenderer.setMap(null);
     };
-  }, [mapIsLoaded]);
-
-  // Initialize form
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      title: '',
-      description: '',
-      country: '',
-      city: '',
-      startLocation: '',
-      endLocation: '',
-      rewardAmount: 0.5,
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16), // Default to 7 days in the future
-    },
-  });
+  }, [mapIsLoaded, locationSelectionMode, form]);
 
   // If recreateTaskId is provided, fetch the task data to prefill the form
   const { data: taskData, isLoading: isLoadingTask } = useQuery({
@@ -162,11 +260,11 @@ export default function CreateTaskForm({ recreateTaskId }: CreateTaskFormProps) 
 
   // Function to display route on map
   const displayRoute = (start: string, end: string) => {
-    if (!mapIsLoaded || !mapInstance) return;
+    if (!mapIsLoaded || !mapInstance || !directionsRenderer) return;
 
     const directionsService = new window.google.maps.DirectionsService();
-    const directionsRenderer = new window.google.maps.DirectionsRenderer();
     
+    // Use the stored directionsRenderer to maintain consistency
     directionsRenderer.setMap(mapInstance);
 
     directionsService.route(
@@ -179,11 +277,20 @@ export default function CreateTaskForm({ recreateTaskId }: CreateTaskFormProps) 
         if (status === window.google.maps.DirectionsStatus.OK) {
           directionsRenderer.setDirections(response);
           setRoute(response);
+          
+          // If markers exist, hide them when showing the route
+          if (startMarker) startMarker.setMap(null);
+          if (endMarker) endMarker.setMap(null);
+          
+          toast({
+            title: 'Route Calculated',
+            description: `Distance: ${response.routes[0].legs[0].distance.text}, Duration: ${response.routes[0].legs[0].duration.text}`,
+          });
         } else {
           console.error('Directions request failed:', status);
           toast({
             title: 'Route Error',
-            description: 'Could not find a route between the locations',
+            description: 'Could not find a route between the locations. Try different locations.',
             variant: 'destructive',
           });
         }
@@ -399,7 +506,24 @@ export default function CreateTaskForm({ recreateTaskId }: CreateTaskFormProps) 
                 name="startLocation"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs text-neutral-500">Start Location</FormLabel>
+                    <div className="flex items-center justify-between">
+                      <FormLabel className="text-xs text-neutral-500">Start Location</FormLabel>
+                      <Button 
+                        type="button" 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={() => {
+                          setLocationSelectionMode('start');
+                          toast({
+                            title: 'Select Start Location',
+                            description: 'Click on the map to set the start location',
+                          });
+                        }}
+                        className="h-6 text-xs px-2"
+                      >
+                        Pick on Map
+                      </Button>
+                    </div>
                     <FormControl>
                       <Input 
                         placeholder="Shibuya Station" 
@@ -420,7 +544,24 @@ export default function CreateTaskForm({ recreateTaskId }: CreateTaskFormProps) 
                 name="endLocation"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs text-neutral-500">End Location</FormLabel>
+                    <div className="flex items-center justify-between">
+                      <FormLabel className="text-xs text-neutral-500">End Location</FormLabel>
+                      <Button 
+                        type="button" 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={() => {
+                          setLocationSelectionMode('end');
+                          toast({
+                            title: 'Select End Location',
+                            description: 'Click on the map to set the end location',
+                          });
+                        }}
+                        className="h-6 text-xs px-2"
+                      >
+                        Pick on Map
+                      </Button>
+                    </div>
                     <FormControl>
                       <Input 
                         placeholder="Yoyogi Park" 
@@ -440,13 +581,51 @@ export default function CreateTaskForm({ recreateTaskId }: CreateTaskFormProps) 
 
           {/* Map Preview */}
           <div>
-            <FormLabel>Map Preview</FormLabel>
-            <div id="map-container" className="mt-2 h-64 rounded-lg bg-neutral-200" />
-            {!mapIsLoaded && (
-              <div className="text-center p-4 text-sm text-neutral-500">
-                Loading map...
+            <div className="flex items-center justify-between">
+              <FormLabel>Map Preview</FormLabel>
+              <div className="flex space-x-2">
+                {locationSelectionMode && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => setLocationSelectionMode(null)}
+                    className="h-7 text-xs"
+                  >
+                    Cancel Selection
+                  </Button>
+                )}
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  onClick={updateRoute}
+                  className="h-7 text-xs"
+                  disabled={!form.getValues('startLocation') || !form.getValues('endLocation')}
+                >
+                  Calculate Route
+                </Button>
               </div>
-            )}
+            </div>
+            <div className="mt-2">
+              <div id="map-container" className="h-64 rounded-lg bg-neutral-200" />
+              {!mapIsLoaded && (
+                <div className="text-center p-4 text-sm text-neutral-500">
+                  Loading map...
+                </div>
+              )}
+              {locationSelectionMode && (
+                <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-2 mt-2 text-sm rounded">
+                  {locationSelectionMode === 'start' ? 'Click on the map to select the start location' : 'Click on the map to select the end location'}
+                </div>
+              )}
+              {route && (
+                <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-2 mt-2 text-sm rounded">
+                  Route distance: {route.routes[0].legs[0].distance.text} | 
+                  Duration: {route.routes[0].legs[0].duration.text}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Reward and Expiration */}
