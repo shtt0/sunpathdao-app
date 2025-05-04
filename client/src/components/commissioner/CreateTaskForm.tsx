@@ -9,6 +9,31 @@ import { useWallet } from '@/contexts/WalletContext';
 import { apiRequest } from '@/lib/queryClient';
 import { createTransferTransaction } from '@/lib/solana';
 
+// Google Maps API型定義
+declare global {
+  interface Window {
+    google?: {
+      maps: {
+        Map: any;
+        Marker: any;
+        DirectionsService: any;
+        DirectionsRenderer: any;
+        Geocoder: any;
+        event: any;
+        Animation: {
+          DROP: number;
+        };
+        TravelMode: {
+          WALKING: string;
+        };
+        DirectionsStatus: {
+          OK: string;
+        };
+      };
+    };
+  }
+}
+
 import {
   Form,
   FormControl,
@@ -85,8 +110,13 @@ export default function CreateTaskForm({ recreateTaskId }: CreateTaskFormProps) 
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
+    // Debug message
+    console.log('Loading Google Maps API...');
+    console.log('API Key available:', !!import.meta.env.VITE_GOOGLE_MAPS_API_KEY);
+
     // Check if the Google Maps API script is already loaded
     if (window.google && window.google.maps) {
+      console.log('Google Maps API already loaded');
       setMapIsLoaded(true);
       return;
     }
@@ -96,7 +126,15 @@ export default function CreateTaskForm({ recreateTaskId }: CreateTaskFormProps) 
     script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''}&libraries=places`;
     script.async = true;
     script.defer = true;
-    script.onload = () => setMapIsLoaded(true);
+    
+    script.onload = () => {
+      console.log('Google Maps API loaded successfully');
+      setMapIsLoaded(true);
+    };
+    
+    script.onerror = () => {
+      console.error('Failed to load Google Maps API');
+    };
 
     document.head.appendChild(script);
 
@@ -129,7 +167,12 @@ export default function CreateTaskForm({ recreateTaskId }: CreateTaskFormProps) 
 
     // Add click listener to map for setting markers
     map.addListener('click', (event: any) => {
+      console.log('Map clicked!');
+      console.log('Current location selection mode:', locationSelectionMode);
+      
       const clickedLocation = event.latLng;
+      console.log('Clicked location:', clickedLocation.lat(), clickedLocation.lng());
+      
       const geocoder = new window.google.maps.Geocoder();
       
       if (locationSelectionMode === 'start') {
@@ -513,7 +556,13 @@ export default function CreateTaskForm({ recreateTaskId }: CreateTaskFormProps) 
                         size="sm" 
                         variant="outline" 
                         onClick={() => {
+                          console.log('Setting location selection mode to: start');
                           setLocationSelectionMode('start');
+                          
+                          // 地図のステータスを確認
+                          console.log('Map loaded:', mapIsLoaded);
+                          console.log('Map instance exists:', !!mapInstance);
+                          
                           toast({
                             title: 'Select Start Location',
                             description: 'Click on the map to set the start location',
@@ -551,7 +600,13 @@ export default function CreateTaskForm({ recreateTaskId }: CreateTaskFormProps) 
                         size="sm" 
                         variant="outline" 
                         onClick={() => {
+                          console.log('Setting location selection mode to: end');
                           setLocationSelectionMode('end');
+                          
+                          // 地図のステータスを確認
+                          console.log('Map loaded:', mapIsLoaded);
+                          console.log('Map instance exists:', !!mapInstance);
+                          
                           toast({
                             title: 'Select End Location',
                             description: 'Click on the map to set the end location',
