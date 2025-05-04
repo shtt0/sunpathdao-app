@@ -19,15 +19,35 @@ declare global {
         DirectionsService: any;
         DirectionsRenderer: any;
         Geocoder: any;
-        event: any;
+        event: {
+          addListener: (instance: any, eventName: string, handler: Function) => any;
+          removeListener: (listener: any) => void;
+          clearInstanceListeners: (instance: any) => void;
+        };
         Animation: {
           DROP: number;
         };
         TravelMode: {
           WALKING: string;
+          DRIVING: string;
+          BICYCLING: string;
+          TRANSIT: string;
         };
         DirectionsStatus: {
           OK: string;
+          NOT_FOUND: string;
+          ZERO_RESULTS: string;
+          MAX_WAYPOINTS_EXCEEDED: string;
+          INVALID_REQUEST: string;
+          OVER_QUERY_LIMIT: string;
+          REQUEST_DENIED: string;
+          UNKNOWN_ERROR: string;
+        };
+        MapTypeId: {
+          ROADMAP: string;
+          SATELLITE: string;
+          HYBRID: string;
+          TERRAIN: string;
         };
       };
     };
@@ -148,121 +168,202 @@ export default function CreateTaskForm({ recreateTaskId }: CreateTaskFormProps) 
 
   // Initialize map when API is loaded
   useEffect(() => {
-    if (!mapIsLoaded) return;
+    if (!mapIsLoaded) {
+      console.log('Map not loaded yet, skipping map initialization');
+      return;
+    }
 
+    console.log('Initializing map now that API is loaded');
+    
     const mapContainerElement = document.getElementById('map-container');
-    if (!mapContainerElement) return;
+    if (!mapContainerElement) {
+      console.error('Map container element not found');
+      return;
+    }
 
-    const map = new window.google.maps.Map(mapContainerElement, {
-      center: { lat: 35.6812, lng: 139.7671 }, // Tokyo, Japan
-      zoom: 14,
-    });
+    try {
+      // Create the map instance
+      const map = new window.google.maps.Map(mapContainerElement, {
+        center: { lat: 35.6812, lng: 139.7671 }, // Tokyo, Japan
+        zoom: 14,
+        mapTypeId: window.google.maps.MapTypeId.ROADMAP,
+        fullscreenControl: false,
+      });
+      
+      console.log('Map instance created successfully');
 
-    // Create directions renderer once
-    const renderer = new window.google.maps.DirectionsRenderer({
-      draggable: true, // Allow route to be dragged/adjusted
-      map: map
-    });
-    setDirectionsRenderer(renderer);
-
+      // Create directions renderer
+      const renderer = new window.google.maps.DirectionsRenderer({
+        draggable: true, // Allow route to be dragged/adjusted
+        map: map
+      });
+      setDirectionsRenderer(renderer);
+      
+      // Store map instance in state for later use
+      setMapInstance(map);
+      
+      // Return cleanup function
+      return () => {
+        // Cleanup - remove event listeners
+        if (window.google && window.google.maps) {
+          window.google.maps.event.clearInstanceListeners(map);
+        }
+        if (startMarker) startMarker.setMap(null);
+        if (endMarker) endMarker.setMap(null);
+        if (directionsRenderer) directionsRenderer.setMap(null);
+      };
+    } catch (error) {
+      console.error('Error initializing map:', error);
+      toast({
+        title: 'Map Error',
+        description: 'Failed to initialize Google Maps. Please try refreshing the page.',
+        variant: 'destructive',
+      });
+    }
+  }, [mapIsLoaded]);
+  
+  // Separate effect for map click listener that depends on the map instance
+  useEffect(() => {
+    if (!mapInstance || !mapIsLoaded) {
+      console.log('Map instance or API not available for click handler');
+      return;
+    }
+    
+    console.log('Setting up map click listener');
+    
     // Add click listener to map for setting markers
-    map.addListener('click', (event: any) => {
+    const clickListener = window.google.maps.event.addListener(mapInstance, 'click', (event: any) => {
       console.log('Map clicked!');
       console.log('Current location selection mode:', locationSelectionMode);
+      
+      if (!locationSelectionMode) {
+        console.log('No location selection mode active, ignoring click');
+        return;
+      }
       
       const clickedLocation = event.latLng;
       console.log('Clicked location:', clickedLocation.lat(), clickedLocation.lng());
       
-      const geocoder = new window.google.maps.Geocoder();
-      
-      if (locationSelectionMode === 'start') {
-        // Clear previous start marker if it exists
-        if (startMarker) {
-          startMarker.setMap(null);
-        }
+      try {
+        const geocoder = new window.google.maps.Geocoder();
         
-        // Create new start marker
-        const marker = new window.google.maps.Marker({
-          position: clickedLocation,
-          map: map,
-          title: 'Start Location',
-          label: 'S',
-          animation: window.google.maps.Animation.DROP
-        });
-        setStartMarker(marker);
-        
-        // Get address from coordinates and update form
-        geocoder.geocode({ location: clickedLocation }, (results: any, status: any) => {
-          if (status === 'OK' && results[0]) {
-            const address = results[0].formatted_address;
-            form.setValue('startLocation', address);
-            
-            // Try to update route if both locations are set
-            const endLocation = form.getValues('endLocation');
-            if (endLocation) {
-              displayRoute(address, endLocation);
-            }
-            
-            toast({
-              title: 'Start Location Set',
-              description: `Selected: ${address}`,
-            });
+        if (locationSelectionMode === 'start') {
+          console.log('Processing start location selection');
+          // Clear previous start marker if it exists
+          if (startMarker) {
+            startMarker.setMap(null);
           }
-        });
-        
-        // Reset selection mode
-        setLocationSelectionMode(null);
-      } 
-      else if (locationSelectionMode === 'end') {
-        // Clear previous end marker if it exists
-        if (endMarker) {
-          endMarker.setMap(null);
-        }
-        
-        // Create new end marker
-        const marker = new window.google.maps.Marker({
-          position: clickedLocation,
-          map: map,
-          title: 'End Location',
-          label: 'E',
-          animation: window.google.maps.Animation.DROP
-        });
-        setEndMarker(marker);
-        
-        // Get address from coordinates and update form
-        geocoder.geocode({ location: clickedLocation }, (results: any, status: any) => {
-          if (status === 'OK' && results[0]) {
-            const address = results[0].formatted_address;
-            form.setValue('endLocation', address);
-            
-            // Try to update route if both locations are set
-            const startLocation = form.getValues('startLocation');
-            if (startLocation) {
-              displayRoute(startLocation, address);
+          
+          // Create new start marker
+          const marker = new window.google.maps.Marker({
+            position: clickedLocation,
+            map: mapInstance,
+            title: 'Start Location',
+            label: 'S',
+            animation: window.google.maps.Animation.DROP
+          });
+          setStartMarker(marker);
+          
+          // Get address from coordinates and update form
+          geocoder.geocode({ location: clickedLocation }, (results: any, status: any) => {
+            console.log('Geocoding result:', status, results);
+            if (status === 'OK' && results && results[0]) {
+              const address = results[0].formatted_address;
+              console.log('Found address:', address);
+              form.setValue('startLocation', address);
+              
+              // Try to update route if both locations are set
+              const endLocation = form.getValues('endLocation');
+              if (endLocation) {
+                displayRoute(address, endLocation);
+              }
+              
+              toast({
+                title: 'Start Location Set',
+                description: `Selected: ${address}`,
+              });
+            } else {
+              console.error('Geocoding failed:', status);
+              toast({
+                title: 'Location Error',
+                description: 'Could not determine address for this location',
+                variant: 'destructive',
+              });
             }
-            
-            toast({
-              title: 'End Location Set',
-              description: `Selected: ${address}`,
-            });
+          });
+          
+          // Reset selection mode
+          console.log('Resetting location selection mode');
+          setLocationSelectionMode(null);
+        }
+        else if (locationSelectionMode === 'end') {
+          console.log('Processing end location selection');
+          // Clear previous end marker if it exists
+          if (endMarker) {
+            endMarker.setMap(null);
           }
+          
+          // Create new end marker
+          const marker = new window.google.maps.Marker({
+            position: clickedLocation,
+            map: mapInstance,
+            title: 'End Location',
+            label: 'E',
+            animation: window.google.maps.Animation.DROP
+          });
+          setEndMarker(marker);
+          
+          // Get address from coordinates and update form
+          geocoder.geocode({ location: clickedLocation }, (results: any, status: any) => {
+            console.log('Geocoding result:', status, results);
+            if (status === 'OK' && results && results[0]) {
+              const address = results[0].formatted_address;
+              console.log('Found address:', address);
+              form.setValue('endLocation', address);
+              
+              // Try to update route if both locations are set
+              const startLocation = form.getValues('startLocation');
+              if (startLocation) {
+                displayRoute(startLocation, address);
+              }
+              
+              toast({
+                title: 'End Location Set',
+                description: `Selected: ${address}`,
+              });
+            } else {
+              console.error('Geocoding failed:', status);
+              toast({
+                title: 'Location Error',
+                description: 'Could not determine address for this location',
+                variant: 'destructive',
+              });
+            }
+          });
+          
+          // Reset selection mode
+          console.log('Resetting location selection mode');
+          setLocationSelectionMode(null);
+        }
+      } catch (error) {
+        console.error('Error processing map click:', error);
+        toast({
+          title: 'Error',
+          description: 'An error occurred when setting the location',
+          variant: 'destructive',
         });
-        
-        // Reset selection mode
         setLocationSelectionMode(null);
       }
     });
 
-    setMapInstance(map);
-
     return () => {
-      // Cleanup - remove event listeners
-      window.google.maps.event.clearInstanceListeners(map);
-      if (startMarker) startMarker.setMap(null);
-      if (endMarker) endMarker.setMap(null);
-      if (directionsRenderer) directionsRenderer.setMap(null);
+      // Cleanup - remove click listener
+      if (window.google && window.google.maps && clickListener) {
+        window.google.maps.event.removeListener(clickListener);
+        console.log('Removed map click listener');
+      }
     };
-  }, [mapIsLoaded, locationSelectionMode, form]);
+  }, [mapInstance, mapIsLoaded, locationSelectionMode, form]);
 
   // If recreateTaskId is provided, fetch the task data to prefill the form
   const { data: taskData, isLoading: isLoadingTask } = useQuery({
@@ -303,42 +404,69 @@ export default function CreateTaskForm({ recreateTaskId }: CreateTaskFormProps) 
 
   // Function to display route on map
   const displayRoute = (start: string, end: string) => {
-    if (!mapIsLoaded || !mapInstance || !directionsRenderer) return;
-
-    const directionsService = new window.google.maps.DirectionsService();
+    if (!mapIsLoaded) {
+      console.log('Map not loaded, cannot display route');
+      return;
+    }
     
-    // Use the stored directionsRenderer to maintain consistency
-    directionsRenderer.setMap(mapInstance);
+    if (!mapInstance) {
+      console.log('Map instance not available, cannot display route');
+      return;
+    }
+    
+    if (!directionsRenderer) {
+      console.log('Directions renderer not available, cannot display route');
+      return;
+    }
+    
+    console.log('Calculating route from', start, 'to', end);
 
-    directionsService.route(
-      {
-        origin: start,
-        destination: end,
-        travelMode: window.google.maps.TravelMode.WALKING,
-      },
-      (response, status) => {
-        if (status === window.google.maps.DirectionsStatus.OK) {
-          directionsRenderer.setDirections(response);
-          setRoute(response);
+    try {
+      const directionsService = new window.google.maps.DirectionsService();
+      
+      // Use the stored directionsRenderer to maintain consistency
+      directionsRenderer.setMap(mapInstance);
+
+      directionsService.route(
+        {
+          origin: start,
+          destination: end,
+          travelMode: window.google.maps.TravelMode.WALKING,
+        },
+        (response: any, status: any) => {
+          console.log('Directions response status:', status);
           
-          // If markers exist, hide them when showing the route
-          if (startMarker) startMarker.setMap(null);
-          if (endMarker) endMarker.setMap(null);
-          
-          toast({
-            title: 'Route Calculated',
-            description: `Distance: ${response.routes[0].legs[0].distance.text}, Duration: ${response.routes[0].legs[0].duration.text}`,
-          });
-        } else {
-          console.error('Directions request failed:', status);
-          toast({
-            title: 'Route Error',
-            description: 'Could not find a route between the locations. Try different locations.',
-            variant: 'destructive',
-          });
+          if (status === window.google.maps.DirectionsStatus.OK) {
+            console.log('Route calculation successful');
+            directionsRenderer.setDirections(response);
+            setRoute(response);
+            
+            // If markers exist, hide them when showing the route
+            if (startMarker) startMarker.setMap(null);
+            if (endMarker) endMarker.setMap(null);
+            
+            toast({
+              title: 'Route Calculated',
+              description: `Distance: ${response.routes[0].legs[0].distance.text}, Duration: ${response.routes[0].legs[0].duration.text}`,
+            });
+          } else {
+            console.error('Directions request failed:', status);
+            toast({
+              title: 'Route Error',
+              description: 'Could not find a route between the locations. Try different locations.',
+              variant: 'destructive',
+            });
+          }
         }
-      }
-    );
+      );
+    } catch (error) {
+      console.error('Error calculating route:', error);
+      toast({
+        title: 'Route Error',
+        description: 'An error occurred while calculating the route',
+        variant: 'destructive',
+      });
+    }
   };
 
   // Update route when start or end location changes
