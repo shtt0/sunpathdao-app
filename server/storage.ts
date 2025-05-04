@@ -82,9 +82,16 @@ export const storage = {
     
     if (whereConditions.length > 0) {
       // Apply all conditions with AND
-      const condition = whereConditions.reduce((acc, curr) => and(acc, curr));
-      query = query.where(condition);
-      countQuery = countQuery.where(condition);
+      if (whereConditions.length === 1) {
+        // If there's only one condition, use it directly
+        query = query.where(whereConditions[0]);
+        countQuery = countQuery.where(whereConditions[0]);
+      } else {
+        // If there are multiple conditions, combine them with AND
+        const condition = whereConditions.reduce((acc, curr) => and(acc, curr));
+        query = query.where(condition);
+        countQuery = countQuery.where(condition);
+      }
     }
     
     // Apply sort
@@ -142,17 +149,17 @@ export const storage = {
   async getTaskWithCommissioner(id: number): Promise<{ task: Task, commissioner: User } | null> {
     const task = await db.query.tasks.findFirst({
       where: eq(tasks.id, id),
-      with: {
-        user: true,
-      },
     });
     
     if (!task) return null;
     
-    return {
-      task,
-      commissioner: task.user,
-    };
+    const commissioner = await db.query.users.findFirst({
+      where: eq(users.id, task.userId),
+    });
+    
+    if (!commissioner) return null;
+    
+    return { task, commissioner };
   },
   
   async createTask(taskData: z.infer<typeof insertTaskSchema>): Promise<Task> {
@@ -177,34 +184,37 @@ export const storage = {
     
     if (!task) return null;
     
-    if (task.status !== 'available') {
-      throw new Error('Only available tasks can have their reward increased');
-    }
-    
-    // Calculate new reward amount
     const currentReward = Number(task.rewardAmount);
     const newReward = currentReward + additionalAmount;
     
-    // Update task
     return this.updateTask(id, { rewardAmount: newReward });
   },
   
   async updateTaskStatus(id: number, status: string): Promise<Task | null> {
-    return this.updateTask(id, { status });
+    return this.updateTask(id, { status: status as Task['status'] });
   },
   
   // Submission operations
   async getSubmissions(
-    userId?: number,
-    status?: string,
-    page: number = 1,
-    limit: number = 10
+    filters: {
+      userId?: number;
+      taskId?: number;
+      status?: string;
+      page: number;
+      limit: number;
+    }
   ): Promise<{ submissions: any[], totalCount: number }> {
+    const { userId, taskId, status, page = 1, limit = 10 } = filters;
+    
     let query = db.select().from(submissions);
     let countQuery = db.select({ count: db.count() }).from(submissions);
     
     // Apply filters
     const whereConditions = [];
+    
+    if (taskId !== undefined) {
+      whereConditions.push(eq(submissions.taskId, taskId));
+    }
     
     if (userId !== undefined) {
       whereConditions.push(eq(submissions.userId, userId));
@@ -216,9 +226,16 @@ export const storage = {
     
     if (whereConditions.length > 0) {
       // Apply all conditions with AND
-      const condition = whereConditions.reduce((acc, curr) => and(acc, curr));
-      query = query.where(condition);
-      countQuery = countQuery.where(condition);
+      if (whereConditions.length === 1) {
+        // If there's only one condition, use it directly
+        query = query.where(whereConditions[0]);
+        countQuery = countQuery.where(whereConditions[0]);
+      } else {
+        // If there are multiple conditions, combine them with AND
+        const condition = whereConditions.reduce((acc, curr) => and(acc, curr));
+        query = query.where(condition);
+        countQuery = countQuery.where(condition);
+      }
     }
     
     // Apply sort - most recent first
@@ -267,52 +284,37 @@ export const storage = {
   async getSubmissionByTaskId(taskId: number): Promise<any | null> {
     const submission = await db.query.submissions.findFirst({
       where: eq(submissions.taskId, taskId),
-      orderBy: desc(submissions.createdAt),
     });
     
     if (!submission) return null;
     
-    // Get runner information
-    const runner = await db.query.users.findFirst({
+    const user = await db.query.users.findFirst({
       where: eq(users.id, submission.userId),
     });
     
-    if (!runner) return null;
-    
     return {
-      submission,
-      runner,
+      ...submission,
+      runner: user,
     };
   },
   
   async saveVideoFile(base64Data: string): Promise<string> {
-    // Generate a random filename
-    const fileName = `${crypto.randomUUID()}.webm`;
-    const filePath = path.join(uploadsDir, fileName);
+    // Remove data URL prefix if present
+    const base64Content = base64Data.replace(/^data:video\/\w+;base64,/, '');
     
-    // Convert base64 to buffer and save file
-    const buffer = Buffer.from(base64Data, 'base64');
-    fs.writeFileSync(filePath, buffer);
+    // Generate a unique filename
+    const filename = `${crypto.randomUUID()}.webm`;
+    const filePath = path.join(uploadsDir, filename);
     
-    // Return the file URL
-    return `/uploads/${fileName}`;
+    // Save the file
+    fs.writeFileSync(filePath, Buffer.from(base64Content, 'base64'));
+    
+    // Return the filename (not the full path for security reasons)
+    return filename;
   },
   
   async createSubmission(submissionData: any): Promise<Submission> {
-    // Save video file
-    const videoUrl = await this.saveVideoFile(submissionData.videoData);
-    
-    // Create submission record
-    const [newSubmission] = await db.insert(submissions).values({
-      taskId: submissionData.taskId,
-      userId: submissionData.userId,
-      videoUrl,
-      startTime: new Date(submissionData.startTime),
-      endTime: new Date(submissionData.endTime),
-      status: 'pending',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }).returning();
+    const [newSubmission] = await db.insert(submissions).values(submissionData).returning();
     
     // Update task status to 'judging'
     await this.updateTaskStatus(submissionData.taskId, 'judging');
