@@ -7,6 +7,7 @@ import { API_ROUTES } from '@/lib/constants';
 import { formatSOL, formatDate, calculateTimeLeft, blobToBase64 } from '@/lib/utils';
 import { VideoRecordingData } from '@shared/types';
 import VideoRecorder from '@/components/runner/VideoRecorder';
+import TaskStatusBadge from '@/components/TaskStatusBadge';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 
