@@ -1,58 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useLocation } from 'wouter';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { API_ROUTES, COUNTRIES } from '@/lib/constants';
+import { API_ROUTES, COUNTRIES, MAPS_CONFIG } from '@/lib/constants';
 import { useWallet } from '@/contexts/WalletContext';
 import { apiRequest } from '@/lib/queryClient';
 import { createTransferTransaction } from '@/lib/solana';
-
-// Google Maps API型定義
-declare global {
-  interface Window {
-    google?: {
-      maps: {
-        Map: any;
-        Marker: any;
-        DirectionsService: any;
-        DirectionsRenderer: any;
-        Geocoder: any;
-        event: {
-          addListener: (instance: any, eventName: string, handler: Function) => any;
-          removeListener: (listener: any) => void;
-          clearInstanceListeners: (instance: any) => void;
-        };
-        Animation: {
-          DROP: number;
-        };
-        TravelMode: {
-          WALKING: string;
-          DRIVING: string;
-          BICYCLING: string;
-          TRANSIT: string;
-        };
-        DirectionsStatus: {
-          OK: string;
-          NOT_FOUND: string;
-          ZERO_RESULTS: string;
-          MAX_WAYPOINTS_EXCEEDED: string;
-          INVALID_REQUEST: string;
-          OVER_QUERY_LIMIT: string;
-          REQUEST_DENIED: string;
-          UNKNOWN_ERROR: string;
-        };
-        MapTypeId: {
-          ROADMAP: string;
-          SATELLITE: string;
-          HYBRID: string;
-          TERRAIN: string;
-        };
-      };
-    };
-  }
-}
+import { 
+  GoogleMap, 
+  useJsApiLoader, 
+  Marker, 
+  DirectionsRenderer, 
+  Autocomplete 
+} from '@react-google-maps/api';
 
 import {
   Form,
@@ -97,19 +59,33 @@ interface CreateTaskFormProps {
   recreateTaskId?: number;
 }
 
+// Google Maps configuration
+const libraries = ["places"];
+const mapContainerStyle = {
+  width: '100%',
+  height: '400px',
+};
+
 export default function CreateTaskForm({ recreateTaskId }: CreateTaskFormProps) {
   const [location, navigate] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { walletStatus, walletAddress, signAndSendTransaction } = useWallet();
-  const [mapIsLoaded, setMapIsLoaded] = useState(false);
-  const [mapInstance, setMapInstance] = useState<any>(null);
-  const [route, setRoute] = useState<any>(null);
   const [isLockingFunds, setIsLockingFunds] = useState(false);
-  const [directionsRenderer, setDirectionsRenderer] = useState<any>(null);
-  const [startMarker, setStartMarker] = useState<any>(null);
-  const [endMarker, setEndMarker] = useState<any>(null);
+  const [map, setMap] = useState<google.maps.Map | null>(null);
+  const [directionsResponse, setDirectionsResponse] = useState<google.maps.DirectionsResult | null>(null);
   const [locationSelectionMode, setLocationSelectionMode] = useState<'start' | 'end' | null>(null);
+  const [originLocation, setOriginLocation] = useState<google.maps.LatLngLiteral | null>(null);
+  const [destinationLocation, setDestinationLocation] = useState<google.maps.LatLngLiteral | null>(null);
+  const startAutocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+  const endAutocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+  
+  // Load Google Maps API
+  const { isLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string,
+    libraries: libraries as any,
+  });
   
   // Initialize form
   const form = useForm<FormValues>({

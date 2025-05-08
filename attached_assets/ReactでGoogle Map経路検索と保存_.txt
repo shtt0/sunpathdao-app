@@ -1,0 +1,567 @@
+﻿3. 経路検索と表示の実装 (ページ1)
+最初のページで、ユーザーがA地点とB地点を指定し、その間の経路を検索して地図上に表示する機能を実装します。
+3.1 Google Maps APIの読み込み
+Google Maps JavaScript APIは非同期で読み込む必要があります。@react-google-maps/api ライブラリは、これを簡単に行うためのフックを提供しています。
+* useJsApiLoader フック: このフックはAPIの読み込みを管理します 5。
+JavaScript
+import { useJsApiLoader } from '@react-google-maps/api';
+import React from 'react';
+
+const libraries = ['places']; // 必要に応じて Directions, Geometry なども追加
+
+function MapComponent() {
+ const { isLoaded, loadError } = useJsApiLoader({
+   id: 'google-map-script', // 任意の一意なID
+   googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY, // 環境変数からAPIキーを読み込む
+   libraries: libraries,
+ });
+
+ if (loadError) {
+   return <div>マップの読み込み中にエラーが発生しました。</div>;
+ }
+
+ if (!isLoaded) {
+   return <div>読み込み中...</div>;
+ }
+
+ // isLoadedがtrueになったら地図コンポーネントをレンダリング
+ return <ActualMapComponent />;
+}
+
+function ActualMapComponent() {
+ // 地図のレンダリングロジック (後述)
+ return <div>マップが表示されます</div>;
+}
+
+export default MapComponent;
+
+useJsApiLoader は isLoaded というboolean型の状態を返します。これが true になるまで地図関連のコンポーネントはレンダリングしないようにし、「google is not defined」のようなエラーを防ぎます 7。loadError オブジェクトで読み込みエラーもハンドリングできます。libraries 配列で使用したい追加ライブラリ（ここではplaces）を指定します。
+* <LoadScript> コンポーネント: useJsApiLoader の代替として、<LoadScript> コンポーネントを使用することもできます。これは子コンポーネントをレンダリングする前にスクリプトの読み込みを保証します 3。
+* @vis.gl/react-google-maps との比較: 別の人気ライブラリ @vis.gl/react-google-maps では、<APIProvider> コンポーネントが同様の役割を果たします 12。このライブラリもGoogle Maps Platformチームによってメンテナンスされており、vis.glエコシステムとの連携が容易です 18。
+3.2 地図の表示
+APIが読み込まれたら、<GoogleMap> コンポーネントを使用して地図を表示します 3。
+
+
+JavaScript
+
+
+
+
+import React, { useCallback, useState } from 'react';
+import { GoogleMap, useJsApiLoader } from '@react-google-maps/api';
+
+const containerStyle = {
+ width: '100%',
+ height: '400px' // 地図のサイズを明示的に指定することが重要
+};
+
+const defaultCenter = {
+ lat: 35.681236, // 例: 東京駅
+ lng: 139.767125
+};
+
+function ActualMapComponent() {
+ const [map, setMap] = useState(null);
+
+ const onLoad = useCallback(function callback(mapInstance) {
+   // 必要であれば map インスタンスを state に保存
+   // 例: mapInstance.fitBounds(bounds); などで使用
+   setMap(mapInstance);
+   console.log('Map loaded:', mapInstance);
+ },);
+
+ const onUnmount = useCallback(function callback(mapInstance) {
+   setMap(null);
+   console.log('Map unmounted');
+ },);
+
+ return (
+   <GoogleMap
+     mapContainerStyle={containerStyle}
+     center={defaultCenter}
+     zoom={10}
+     onLoad={onLoad}
+     onUnmount={onUnmount}
+     options={{ // その他のオプション
+       zoomControl: true,
+       streetViewControl: false,
+       mapTypeControl: false,
+       fullscreenControl: false,
+     }}
+   >
+     {/* マーカーや経路などをここに追加 */}
+   </GoogleMap>
+ );
+}
+
+// MapComponent (useJsApiLoader を含む) は前のセクションを参照
+
+   * mapContainerStyle: 地図を表示する div 要素のスタイルを指定します。高さと幅を明示的に指定しないと地図が表示されない場合があります 13。
+   * center: 地図の初期中心位置を { lat: number, lng: number } 形式で指定します 3。
+   * zoom: 地図の初期ズームレベルを指定します 3。
+   * onLoad, onUnmount: 地図インスタンスが読み込まれたとき、アンマウントされたときに呼び出されるコールバック関数です。これにより、map オブジェクトへの参照を取得し、ズームの調整やイベントリスナーの追加など、より高度な操作が可能になります 5。
+   * options: Google Maps JavaScript API の MapOptions オブジェクトに対応する設定を渡すことができます（例：コントロールの表示/非表示）5。
+3.3 出発地（A地点）と目的地（B地点）の定義
+ユーザーが経路検索の始点と終点を指定する方法はいくつか考えられます。
+   * 方法1: オートコンプリート入力の使用 (推奨)
+@react-google-maps/api の <Autocomplete> コンポーネントを使用すると、ユーザーが場所名を入力する際に候補を表示し、選択された場所の place_id を簡単に取得できます 5。place_id は場所を一意に識別するIDであり、Directions APIの origin や destination に指定するのに最適です 6。
+JavaScript
+import React, { useState, useRef, useCallback } from 'react';
+import { GoogleMap, useJsApiLoader, Autocomplete, Marker } from '@react-google-maps/api';
+
+//... (MapComponent と isLoaded の部分は省略)
+
+function RouteFinderMap() {
+ const [map, setMap] = useState(null);
+ const [originPlaceId, setOriginPlaceId] = useState(null);
+ const [destinationPlaceId, setDestinationPlaceId] = useState(null);
+ const [originMarker, setOriginMarker] = useState(null);
+ const [destinationMarker, setDestinationMarker] = useState(null);
+
+ const originAutocompleteRef = useRef(null);
+ const destinationAutocompleteRef = useRef(null);
+
+ const onLoad = useCallback(mapInstance => setMap(mapInstance),);
+
+ const onOriginPlaceChanged = () => {
+   if (originAutocompleteRef.current!== null) {
+     const place = originAutocompleteRef.current.getPlace();
+     if (place.place_id && place.geometry?.location) {
+       setOriginPlaceId(place.place_id);
+       const location = {
+         lat: place.geometry.location.lat(),
+         lng: place.geometry.location.lng(),
+       };
+       setOriginMarker(location);
+       // Optionally pan/zoom the map
+       if (map) {
+         map.panTo(location);
+         map.setZoom(15);
+       }
+     } else {
+        console.error("場所情報が見つかりません。リストから選択してください。");
+        // Handle error: show message to user
+     }
+   }
+ };
+
+ const onDestinationPlaceChanged = () => {
+   if (destinationAutocompleteRef.current!== null) {
+     const place = destinationAutocompleteRef.current.getPlace();
+      if (place.place_id && place.geometry?.location) {
+       setDestinationPlaceId(place.place_id);
+       const location = {
+         lat: place.geometry.location.lat(),
+         lng: place.geometry.location.lng(),
+       };
+       setDestinationMarker(location);
+        // Optionally pan/zoom the map
+       if (map) {
+         map.panTo(location);
+         map.setZoom(15);
+       }
+     } else {
+        console.error("場所情報が見つかりません。リストから選択してください。");
+        // Handle error: show message to user
+     }
+   }
+ };
+
+ return (
+   <div>
+     <div>
+       <Autocomplete
+         onLoad={ref => (originAutocompleteRef.current = ref)}
+         onPlaceChanged={onOriginPlaceChanged}
+         options={{ fields: ["place_id", "geometry", "name"] }} // place_id を含める
+       >
+         <input type="text" placeholder="出発地を入力" />
+       </Autocomplete>
+       <Autocomplete
+         onLoad={ref => (destinationAutocompleteRef.current = ref)}
+         onPlaceChanged={onDestinationPlaceChanged}
+         options={{ fields: ["place_id", "geometry", "name"] }}
+       >
+         <input type="text" placeholder="目的地を入力" />
+       </Autocomplete>
+       {/* Travel Mode Selector and Calculate Button here */}
+     </div>
+
+     <GoogleMap
+       mapContainerStyle={containerStyle}
+       center={defaultCenter}
+       zoom={10}
+       onLoad={onLoad}
+       //... other props
+     >
+       {originMarker && <Marker position={originMarker} label="A" />}
+       {destinationMarker && <Marker position={destinationMarker} label="B" />}
+       {/* DirectionsRenderer will go here */}
+     </GoogleMap>
+   </div>
+ );
+}
+
+Autocomplete コンポーネントの onLoad でインスタンスへの参照を取得し、onPlaceChanged イベントで getPlace() を呼び出して選択された場所の情報を取得します 5。options.fields で place_id と geometry をリクエストすることが重要です。取得した place_id を state に保存します。
+3.4 経路情報の取得
+出発地と目的地が設定されたら、DirectionsService を使用して経路情報を取得します 2。
+
+
+JavaScript
+
+
+
+
+import React, { useState, useRef, useCallback } from 'react';
+import { GoogleMap, useJsApiLoader, Autocomplete, Marker, DirectionsRenderer } from '@react-google-maps/api';
+
+//... (RouteFinderMap or RouteFinderMapClick component setup)
+
+function RouteFinderComponent() {
+ //... (state for map, origin, destination, markers etc.)
+ const = useState(null);
+ const = useState('DRIVING'); // 'DRIVING', 'WALKING', 'BICYCLING', 'TRANSIT'
+
+ const calculateRoute = async () => {
+   // Ensure origin and destination are set (either Place ID or LatLng)
+   let originInput, destinationInput;
+   if (originPlaceId && destinationPlaceId) { // Using Autocomplete (Place IDs)
+       originInput = { 'placeId': originPlaceId };
+       destinationInput = { 'placeId': destinationPlaceId };
+   } else if (origin && destination) { // Using Map Click (LatLng)
+       originInput = origin; // { lat, lng }
+       destinationInput = destination; // { lat, lng }
+   } else {
+       alert("出発地と目的地を設定してください。");
+       return;
+   }
+
+   // Avoid creating new service/renderer on every call if possible
+   // This check ensures google.maps is loaded
+   if (!window.google ||!window.google.maps) {
+       console.error("Google Maps API not loaded yet.");
+       return;
+   }
+
+   const directionsService = new window.google.maps.DirectionsService();
+
+   try {
+       const results = await directionsService.route({
+           origin: originInput,              // [21]
+           destination: destinationInput,      // [21]
+           travelMode: window.google.maps.TravelMode[travelMode], // [2, 5, 21]
+           // provideRouteAlternatives: false, // 必要に応じて代替ルートを要求
+       });
+       // Check status before setting state
+       if (results && results.status === window.google.maps.DirectionsStatus.OK) {
+           setDirectionsResponse(results);
+       } else {
+           // Handle specific statuses (ZERO_RESULTS, NOT_FOUND etc.)
+           handleDirectionsError(results? results.status : 'UNKNOWN_ERROR');
+           setDirectionsResponse(null); // Clear previous route if error
+       }
+   } catch (error) {
+       console.error('Directions request failed:', error);
+       handleDirectionsError('UNKNOWN_ERROR'); // Or more specific error handling
+       setDirectionsResponse(null);
+   }
+ };
+
+ const handleDirectionsError = (status) => {
+     // Display user-friendly message based on status (see Section VI)
+     console.error(`Error fetching directions: ${status}`);
+     alert(`経路の取得に失敗しました: ${status}`); // Replace with better UI message
+ };
+
+ const clearRoute = () => {
+   setDirectionsResponse(null);
+   setOrigin(null); // or setOriginPlaceId(null)
+   setDestination(null); // or setDestinationPlaceId(null)
+   setOriginMarker(null);
+   setDestinationMarker(null);
+   // Clear input fields if using Autocomplete
+   if (originAutocompleteRef.current) originAutocompleteRef.current.value = '';
+   if (destinationAutocompleteRef.current) destinationAutocompleteRef.current.value = '';
+ };
+
+ //... (Rest of the component including Autocomplete/Map Click setup)
+
+ return (
+   <div>
+     {/* Input fields, Travel Mode Selector */}
+     <select value={travelMode} onChange={(e) => setTravelMode(e.target.value)}>
+       <option value="DRIVING">車</option>
+       <option value="WALKING">徒歩</option>
+       <option value="BICYCLING">自転車</option>
+       <option value="TRANSIT">公共交通機関</option>
+     </select>
+     <button onClick={calculateRoute}>経路検索</button>
+     <button onClick={clearRoute}>クリア</button> {/* [5, 33] */}
+
+     <GoogleMap /*...props... */ >
+       {/* Markers */}
+       {originMarker && <Marker position={originMarker} label="A" />}
+       {destinationMarker && <Marker position={destinationMarker} label="B" />}
+
+       {/* Directions Renderer */}
+       {directionsResponse && (
+         <DirectionsRenderer directions={directionsResponse} />
+       )}
+     </GoogleMap>
+
+     {/* Button to save route */}
+     {directionsResponse && (
+       <button onClick={() => saveRoute(originPlaceId |
+| origin, destinationPlaceId |
+| destination, travelMode, "My Saved Route")}>
+         この経路を保存
+       </button>
+     )}
+   </div>
+ );
+}
+
+      * DirectionsService: window.google.maps.DirectionsService のインスタンスを作成します。コンポーネントのレンダリングごとに作成するのではなく、useState や useRef で保持するか、APIロード後に一度だけ作成するのが効率的です。
+      * directionsService.route(): このメソッドを呼び出して経路検索を実行します。
+      * DirectionsRequest オブジェクトを引数として渡します。
+      * origin と destination: placeId を持つオブジェクト ({placeId: '...'}) 21 または LatLng オブジェクト ({lat:..., lng:...}) 21、あるいは住所文字列 21 を指定できます。Place IDの使用が推奨されます。
+      * travelMode: google.maps.TravelMode Enum (例: DRIVING, WALKING) を指定します 2。ユーザーが選択できるようにUIを提供し、選択された値をstateで管理します。
+      * このメソッドは非同期であり、Promiseを返すか、コールバック関数を受け取ります 5。Promiseベース (async/await または .then().catch()) の方が現代的なJavaScriptでは扱いやすいでしょう 32。
+      * レスポンスには result (DirectionsResult オブジェクト) と status (DirectionsStatus 文字列) が含まれます。
+3.5 経路の表示
+DirectionsService から正常に DirectionsResult が返されたら、それを地図上に表示します。
+      * <DirectionsRenderer> コンポーネント: @react-google-maps/api が提供するこのコンポーネントは、DirectionsResult オブジェクトを受け取り、経路のポリライン、マーカー（A, B）、および必要に応じて各ステップの指示を自動的に地図上に描画します 5。
+JavaScript
+// Inside the RouteFinderComponent's return statement:
+<GoogleMap /*...props... */ >
+ {/* Markers (optional if DirectionsRenderer shows them) */}
+ {/*... */}
+
+ {/* Render the route if directionsResponse exists */}
+ {directionsResponse && (
+   <DirectionsRenderer
+     directions={directionsResponse} // Pass the result object from state
+     options={{ // Optional: customize renderer appearance
+        suppressMarkers: false, // true にすると A/B マーカーを非表示
+        polylineOptions: {
+          strokeColor: '#FF0000', //線の色
+          strokeOpacity: 0.8, //線の不透明度
+          strokeWeight: 6 //線の太さ
+        }
+     }}
+   />
+ )}
+</GoogleMap>
+
+directions プロパティに DirectionsService.route() から取得してstateに保存した DirectionsResult オブジェクトを渡すだけです 5。DirectionsRenderer は、結果に含まれる複数のルート（provideRouteAlternatives: true の場合）の表示や、ルートのドラッグによる変更（draggable: true の場合）などもサポートします 28。
+      * (代替) 手動でのポリライン描画: DirectionsResult オブジェクト内の routes.overview_polyline.points には、経路全体を表すエンコードされたポリライン文字列が含まれています 21。これをデコード（google.maps.geometry.encoding.decodePath() を使用。geometry ライブラリのロードが必要）して座標の配列を取得し、@react-google-maps/api の <Polyline> コンポーネント 37 を使って手動で線を描画することも可能です。しかし、通常はマーカーやステップ表示も必要なため、<DirectionsRenderer> を使用する方がはるかに簡単です。
+4. 経路データの永続化
+計算された経路を保存し、後で再表示できるようにします。ここで最も重要なのは、Google Maps Platformの利用規約（ToS）を遵守することです。
+4.1 Google Maps Platform 利用規約 (ToS) とキャッシュ制限
+Google Maps Platformの利用規約では、APIから取得した「コンテンツ」のキャッシュ、保存、インデックス作成に関して制限が設けられています 39。
+         * キャッシュが許可されているデータ:
+         * Place ID (place_id): 場所を一意に識別するIDで、無期限に保存できます。ただし、場所の閉鎖や移転などで古くなる可能性があるため、12ヶ月以上経過したものは更新（Place Detailsリクエストでplace_idフィールドのみを指定）が推奨されます 6。
+         * 緯度・経度 (lat, lng): 最大30日間、一時的にキャッシュすることが許可されています。30日後には削除する必要があります 42。
+         * 制限・禁止されている行為:
+         * コンテンツの事前取得、インデックス作成、保存、キャッシュ: 上記の限定的な条件を除き、Directions APIの結果に含まれる詳細なステップ情報、距離、所要時間、著作権情報、警告、詳細なポリラインデータなどを、オフライン利用や独自のデータセット構築のために長期間保存することは、一般的に利用規約で禁止されています 39。特に、DirectionsResult オブジェクト全体をそのままシリアライズして永続化することは、規約違反となる可能性が高いです。
+         * 非Googleマップでの表示: Directions APIのデータをGoogleマップ以外の地図上に表示することは禁止されています 39。
+         * 帰属表示: <DirectionsRenderer> を使用しない場合、レスポンスに含まれる著作権情報 (copyrights) や警告 (warnings) を適切に表示する義務があります 21。
+4.2 推奨される永続化戦略: 最小限のパラメータ保存
+利用規約を遵守するため、経路そのもの（DirectionsResult）を直接保存するのではなく、後で同じ経路を再リクエストするために必要な最小限の情報のみを保存する戦略が推奨されます。
+         * 保存すべき必須データ:
+         * 出発地の識別子 (推奨: place_id) 6
+         * 目的地の識別子 (推奨: place_id) 6
+         * 交通手段 (travelMode の値、例: 'DRIVING', 'WALKING') 21
+         * 保存してもよいオプションデータ:
+         * ユーザーが付けた経路の名前 (例: "自宅から会社へ")
+         * 保存を避けるべきデータ:
+         * DirectionsResult オブジェクト全体
+         * 経路のステップ (legs, steps)
+         * エンコードされたポリライン (overview_polyline)
+         * 距離 (distance)
+         * 所要時間 (duration) (これらはAPI呼び出し時に変動する可能性があるため、保存する意味も薄い)
+         * 著作権情報 (copyrights)、警告 (warnings)
+このアプローチは、利用規約に準拠し、保存するデータ量を最小限に抑えます。しかし、保存された経路を表示するたびに、再度Directions APIへのリクエストが発生し、API呼び出し回数と潜在的なコストが増加するというトレードオフがあります。これは、規約遵守と利便性・コストのバランスを取った結果です。
+4.3 ストレージメカニズムの選択
+最小限の経路パラメータを保存する場所を選択します。
+         * サーバーサイドストレージ (より堅牢だがバックエンドが必要):
+         * 利点: ユーザーのブラウザやデバイスに依存せずデータが永続化され、ユーザー間やデバイス間での共有も可能です。より安全な保管、大容量、高度なクエリが可能です。
+         * 欠点: バックエンドAPIとデータベースの構築・維持が必要です。データの保存・読み込み時にネットワーク遅延が発生します。
+         * 考慮事項: データベーススキーマ（例: Users テーブル、SavedRoutes テーブルに user_id, route_name, origin_place_id, destination_place_id, travel_mode カラム）51 や、RESTfulなAPI設計（例: /api/users/{userId}/routes のようなエンドポイント）6 が必要になります。
+         * 4.4 実装: 保存
+
+
+
+
+[表1] クライアントサイドストレージの比較
+
+
+特徴
+	
+
+	IndexedDB
+	データ型
+	
+
+	構造化データ (オブジェクト, 配列, Blob等) 48
+	ストレージ容量
+	
+
+	数百MB～数GB (ディスク空き容量依存) 48
+	APIタイプ
+	
+
+	非同期 (ノンブロッキング) 48
+	複雑さ
+	
+
+	複雑、学習コスト高 48
+	ユースケース適性
+	
+
+	大量/複雑なデータ、オフライン利用、高パフォーマンス要求
+	今回の経路保存
+	
+
+	過剰スペックだが機能的には可能
+	
+
+5. 保存された経路の取得と表示 (ページ2)
+次に、保存された経路をリスト表示し、選択された経路を別のページで地図上に再表示する機能を実装します。これには react-router-dom を使用します。
+5.1 React Router の設定
+アプリケーションのルートコンポーネント（通常 src/index.js または src/App.js）で、<BrowserRouter> を用いてアプリケーション全体をラップします 14。
+
+
+6. APIエラーとエッジケースの処理
+Google Maps API との連携では、様々なエラーや予期せぬ状況が発生する可能性があります。これらに適切に対処し、ユーザーに分かりやすいフィードバックを提供することが重要です。
+6.1 APIロードステータスの確認
+useJsApiLoader フックから返される isLoaded と loadError を常に確認することが基本です 5。
+         * !isLoaded: APIがまだ読み込み中の状態です。ローディングインジケーターなどを表示します。
+         * loadError: APIの読み込み自体に失敗した場合です。APIキーが無効、ネットワーク接続がない、Google側の問題などが考えられます。ユーザーには「マップを読み込めませんでした」といった汎用的なメッセージを表示し、開発者向けにコンソールにエラー詳細をログ出力するのが良いでしょう 16。BillingNotEnabledMapError や InvalidKeyMapError など、具体的なエラーコードは開発者が問題を特定するのに役立ちます 55。
+         * google is not defined エラー 7: これは、isLoaded が true になる前に window.google.maps オブジェクトにアクセスしようとした場合に発生することが多いです。isLoaded による条件分岐レンダリングを徹底することで防げます。
+6.2 DirectionsService ステータスコードの処理
+DirectionsService.route() のコールバック関数またはPromiseの解決値には、DirectionsResult と共に DirectionsStatus が返されます。この status を必ずチェックし、OK 以外の場合には適切に対応する必要があります 5。
+以下は、主要なステータスコードとその対処法の例です。
+
+
+ステータスコード (google.maps.DirectionsStatus)
+	意味
+	推奨されるユーザーメッセージ例
+	開発者アクション（ログ等）
+	OK
+	リクエスト成功、有効な経路が見つかった 21
+	(メッセージ不要、経路を表示)
+	-
+	ZERO_RESULTS
+	出発地と目的地の間に指定された交通手段での経路が見つからなかった 21
+	「指定された条件での経路が見つかりませんでした。」
+	ユーザー入力や選択モードを確認する可能性
+	NOT_FOUND
+	出発地、目的地、または経由地のいずれかがジオコーディングできなかった（Place IDが無効など）21
+	「指定された場所が見つかりませんでした。」
+	Place IDの有効性を確認、リフレッシュを検討
+	INVALID_REQUEST
+	リクエストが無効（必須パラメータ欠落など）28
+	「リクエストが無効です。入力内容を確認してください。」
+	リクエスト内容のデバッグ
+	OVER_QUERY_LIMIT
+	短期間にリクエスト数が多すぎる、または課金関連の問題 28
+	「現在、経路情報を取得できません。しばらくしてから再試行してください。」
+	API使用量、割り当て、課金設定を確認
+	REQUEST_DENIED
+	APIキーが無効、サービスが有効でない、リファラー制限違反など 28
+	「経路情報の取得が許可されていません。」
+	APIキー、有効なAPI、制限設定を確認
+	UNKNOWN_ERROR
+	サーバー側の一時的なエラー 28
+	「不明なエラーが発生しました。時間をおいて再試行してください。」
+	再試行ロジックを検討、Google側の問題の可能性
+	実装例 (React Stateを使用):
+
+
+JavaScript
+
+
+
+
+// Component内で
+const = useState(null);
+
+const handleDirectionsResponse = (response, status) => {
+ if (status === window.google.maps.DirectionsStatus.OK) {
+   setDirectionsResponse(response);
+   setRouteError(null); // エラーをクリア
+ } else {
+   setDirectionsResponse(null); // 前の経路をクリア
+   let userMessage = `経路の取得に失敗しました: ${status}`;
+   switch (status) {
+     case window.google.maps.DirectionsStatus.ZERO_RESULTS:
+       userMessage = "指定された条件での経路が見つかりませんでした。交通手段を変更するか、別の場所をお試しください。";
+       break;
+     case window.google.maps.DirectionsStatus.NOT_FOUND:
+       userMessage = "指定された場所が見つかりませんでした。入力内容を確認してください。";
+       break;
+     case window.google.maps.DirectionsStatus.OVER_QUERY_LIMIT:
+       userMessage = "一時的に情報を取得できません。しばらくしてから再試行してください。";
+       break;
+     case window.google.maps.DirectionsStatus.REQUEST_DENIED:
+       userMessage = "経路情報の取得が許可されていません。設定を確認してください。";
+       break;
+     // 他のケースも必要に応じて追加
+     default:
+       userMessage = `エラーが発生しました (${status})。時間をおいて再試行してください。`;
+   }
+   setRouteError(userMessage); // stateにエラーメッセージを設定
+   console.error(`Error fetching directions: ${status}`, response); // 詳細をコンソールにログ
+ }
+};
+
+// DirectionsService.route のコールバックまたは.then/.catch 内で handleDirectionsResponse を呼び出す
+// 例:
+// directionsService.route(request, handleDirectionsResponse);
+// または
+// directionsService.route(request)
+//  .then(response => handleDirectionsResponse(response, window.google.maps.DirectionsStatus.OK))
+//  .catch(error => {
+//      // errorオブジェクトから status を特定するのは難しい場合があるため、
+//      // コールバック形式の方が status を直接扱える利点がある
+//      console.error("Directions request promise failed:", error);
+//      handleDirectionsResponse(null, 'UNKNOWN_ERROR'); // またはより具体的なエラーコード
+//   });
+
+
+// Render内でエラーメッセージを表示
+return (
+ <div>
+   {/*... Map and other controls... */}
+   {routeError && <div style={{ color: 'red', marginTop: '10px' }}>{routeError}</div>}
+ </div>
+);
+
+
+ZERO_RESULTS は、APIが正常に動作し、「該当する経路が存在しない」という結果を返した場合であり、技術的なエラーとは区別して扱うことが重要です。ユーザーには、エラーではなく結果として「経路が見つからない」旨を伝えるべきです 21。
+6.3 APIキーと課金に関するエラー
+APIキー自体やプロジェクトの課金設定に問題がある場合、APIの読み込み時 (useJsApiLoader や <APIProvider> の onError 16) や、APIサービス（DirectionsServiceなど）の呼び出し時にエラーが発生します。
+         * BillingNotEnabledMapError: プロジェクトで課金が有効になっていない場合に発生します 55。Google Cloud Consoleで課金を有効にする必要があります。
+         * InvalidKeyMapError: APIキーが無効または存在しない場合に発生します 56。正しいAPIキーを使用しているか確認が必要です。
+         * RefererNotAllowedMapError: APIキーに設定されたHTTPリファラー制限により、現在のウェブサイトからのリクエストが拒否された場合に発生します 56。Cloud Consoleでリファラー設定を確認・修正する必要があります。
+         * ApiNotActivatedMapError: 必要なAPI（Maps JavaScript API, Directions APIなど）がプロジェクトで有効になっていない場合に発生します 56。Cloud Consoleで有効化する必要があります。
+これらのエラーは通常、開発者側の設定不備に起因するため、ユーザーには「地図サービスの読み込みに問題が発生しました。管理者にお問い合わせください。」のような一般的なメッセージを表示し、開発コンソールには詳細なエラー情報をログ出力して、開発者が原因を特定できるようにすることが推奨されます。
+7. 高度な考慮事項とベストプラクティス
+基本的な機能実装に加えて、コスト、パフォーマンス、ユーザーエクスペリエンスに関する考慮事項があります。
+7.1 コスト管理
+Google Maps Platformは従量課金制モデルを採用しています 59。
+         * 無料枠: 毎月一定額（例: $200 USD）の無料クレジットが提供される場合がありますが、これを超えると課金が発生します 59。
+         * SKU: APIの呼び出しはSKU（Stock Keeping Unit）単位で課金されます。例えば、地図の表示（Dynamic Maps）、経路検索（Directions API）、場所の検索（Places API）はそれぞれ異なるSKUに対応し、料金も異なります 59。
+         * 使用状況の監視: Google Cloud Consoleの課金レポートでAPIの使用状況を定期的に監視し、予期せぬコストが発生していないか確認することが重要です 59。
+         * 予算アラートと割り当て: 必要に応じて、予算アラートやAPIごとの割り当て（Quota）を設定し、コストを管理できます 59。
+         * 保存済み経路の再取得コスト: 本レポートで推奨した「最小限のパラメータを保存し、表示時に再取得する」戦略は、利用規約を遵守する一方で、保存された経路を表示するたびにDirections APIの呼び出し（=コスト）が発生します。ユーザーが頻繁に保存済み経路を閲覧する場合、この点がコストに影響を与える可能性があります。もし経路に関連する場所の詳細情報（名前や住所など）も頻繁に表示する必要がある場合は、Place Details APIの呼び出し結果を（ToSの範囲内で）キャッシュすることも検討できますが、経路自体の再取得は避けられません。
+7.2 パフォーマンス
+         * 不要な再レンダリングの抑制: Reactでは、特に地図コンポーネントのような重いコンポーネントの不要な再レンダリングはパフォーマンスに影響します。React.memo や useCallback, useMemo を適切に使用して最適化します 61。shouldComponentUpdate（クラスコンポーネント）や React.memo の比較関数で、関連するプロパティが変更された場合のみ再レンダリングするように制御できます。
+         * API呼び出しの最適化: ユーザー入力に応じて頻繁に経路検索がトリガーされるようなUIの場合、入力完了を待つ（デバウンス）か、一定間隔で実行する（スロットリング）ことで、API呼び出し回数を抑制できます。
+         * 多数のマーカー: 今回の要件には直接関係ありませんが、地図上に多数のマーカーを表示する場合は、マーカークラスタリング（Marker Clustering）ライブラリを使用したり、SVGではなくラスター画像（PNGなど）をマーカーアイコンに使用したりすることでパフォーマンスが向上します 62。
+7.3 ユーザーエクスペリエンス (UX)
+         * ローディング状態の表示: 地図の読み込み中や経路計算中など、時間がかかる可能性のある処理の間は、スピナーやメッセージを表示して、ユーザーに処理中であることを明確に伝えます。
+         * クリア機能: ユーザーが選択した地点や表示された経路を簡単にリセットできる「クリア」ボタンを提供すると親切です 5。
+         * 分かりやすいエラーメッセージ: APIエラーが発生した場合、技術的な詳細ではなく、ユーザーが理解できる言葉で何が起こったのか、次に何をすべきか（例：「経路が見つかりません。条件を変えて再検索してください」）を伝えます 63。
+         1.
