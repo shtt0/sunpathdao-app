@@ -202,6 +202,7 @@ export default function TaskDetail() {
       videoData: string;
       startTime: string;
       endTime: string;
+      walletAddress?: string; // ウォレットアドレスを追加、オプショナルとして定義
     }) => {
       const response = await apiRequest('POST', API_ROUTES.SUBMISSIONS, data);
       return response.json();
@@ -256,12 +257,13 @@ export default function TaskDetail() {
       // Convert blob to base64
       const base64Data = await blobToBase64(recordingData.blob);
       
-      // Submit the recording
+      // Submit the recording (include walletAddress for user identification)
       submitTaskMutation.mutate({
         taskId: parseInt(id),
         videoData: base64Data,
         startTime: recordingData.startTime.toISOString(),
         endTime: recordingData.endTime.toISOString(),
+        walletAddress, // 重要: ウォレットアドレスを追加
       });
       
       setIsRecording(false);
