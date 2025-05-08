@@ -113,10 +113,7 @@ export default function CreateTaskForm({ recreateTaskId }: CreateTaskFormProps) 
       };
       
       // 2. Submit the task to the server
-      return apiRequest(`${API_ROUTES.TASKS}`, {
-        method: 'POST',
-        body: JSON.stringify(taskData),
-      });
+      return apiRequest('POST', `${API_ROUTES.TASKS}`, taskData);
     },
     onSuccess: (data) => {
       toast({
@@ -271,9 +268,6 @@ export default function CreateTaskForm({ recreateTaskId }: CreateTaskFormProps) 
     setRouteData(null);
     form.setValue('startLocation', '');
     form.setValue('endLocation', '');
-    
-    if (originRef.current) originRef.current.value = '';
-    if (destinationRef.current) destinationRef.current.value = '';
   };
 
   // Handle form submission
