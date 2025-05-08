@@ -221,7 +221,7 @@ export default function CreateTaskForm({ recreateTaskId }: CreateTaskFormProps) 
       {
         origin: startLocation,
         destination: endLocation,
-        travelMode: google.maps.TravelMode.WALKING,
+        travelMode: google.maps.TravelMode.DRIVING,
       },
       (result, status) => {
         if (status === google.maps.DirectionsStatus.OK && result) {
@@ -540,7 +540,7 @@ export default function CreateTaskForm({ recreateTaskId }: CreateTaskFormProps) 
                         <p className="font-medium">{routeData.distance}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Walking Duration</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Driving Duration</p>
                         <p className="font-medium">{routeData.duration}</p>
                       </div>
                     </div>
