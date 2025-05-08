@@ -50,75 +50,80 @@ export const storage = {
   async getTasks(filters: TaskFilters): Promise<{ tasks: Task[], totalCount: number }> {
     const { search, country, status, sortBy, page = 1, limit = 10, userId } = filters;
     
-    let query = db.select().from(tasks);
-    let countQuery = db.select({ count: db.count() }).from(tasks);
-    
-    // Apply filters directly without building a complex condition
+    // Build the WHERE conditions
+    const conditions = [];
     
     if (userId !== undefined) {
-      query = query.where(eq(tasks.userId, userId));
-      countQuery = countQuery.where(eq(tasks.userId, userId));
+      conditions.push(eq(tasks.userId, userId));
     }
     
     if (status) {
-      query = query.where(eq(tasks.status, status));
-      countQuery = countQuery.where(eq(tasks.status, status));
+      conditions.push(eq(tasks.status, status));
     }
     
     if (country) {
-      query = query.where(eq(tasks.country, country));
-      countQuery = countQuery.where(eq(tasks.country, country));
+      conditions.push(eq(tasks.country, country));
     }
     
     if (search) {
-      const searchCondition = or(
-        like(tasks.title, `%${search}%`),
-        like(tasks.description, `%${search}%`),
-        like(tasks.city, `%${search}%`),
-        like(tasks.startLocation, `%${search}%`),
-        like(tasks.endLocation, `%${search}%`)
+      conditions.push(
+        or(
+          like(tasks.title, `%${search}%`),
+          like(tasks.description, `%${search}%`),
+          like(tasks.city, `%${search}%`),
+          like(tasks.startLocation, `%${search}%`),
+          like(tasks.endLocation, `%${search}%`)
+        )
       );
-      query = query.where(searchCondition);
-      countQuery = countQuery.where(searchCondition);
     }
     
-    // Apply sort
+    // Prepare order by
+    let orderByOption;
     if (sortBy) {
       switch (sortBy) {
         case 'newest':
-          query = query.orderBy(desc(tasks.createdAt));
+          orderByOption = desc(tasks.createdAt);
           break;
         case 'oldest':
-          query = query.orderBy(asc(tasks.createdAt));
+          orderByOption = asc(tasks.createdAt);
           break;
         case 'reward-high':
-          query = query.orderBy(desc(tasks.rewardAmount));
+          orderByOption = desc(tasks.rewardAmount);
           break;
         case 'reward-low':
-          query = query.orderBy(asc(tasks.rewardAmount));
+          orderByOption = asc(tasks.rewardAmount);
           break;
         case 'expiry':
-          query = query.orderBy(asc(tasks.expiresAt));
+          orderByOption = asc(tasks.expiresAt);
           break;
         default:
-          query = query.orderBy(desc(tasks.createdAt));
+          orderByOption = desc(tasks.createdAt);
       }
     } else {
-      // Default sort by newest
-      query = query.orderBy(desc(tasks.createdAt));
+      orderByOption = desc(tasks.createdAt);
     }
+    
+    // Get total count first
+    let countQuery = db.select().from(tasks);
+    for (const condition of conditions) {
+      countQuery = countQuery.where(condition);
+    }
+    const countResult = await countQuery;
+    const totalCount = countResult.length;
+    
+    // Then get paginated results
+    let query = db.select().from(tasks);
+    for (const condition of conditions) {
+      query = query.where(condition);
+    }
+    query = query.orderBy(orderByOption);
     
     // Apply pagination
     const offset = (page - 1) * limit;
     query = query.limit(limit).offset(offset);
     
-    // Execute queries
-    const [taskResults, countResults] = await Promise.all([
-      query,
-      countQuery,
-    ]);
-    
-    const totalCount = Number(countResults[0]?.count || 0);
+    // Get the tasks
+    const taskResults = await query;
     
     return {
       tasks: taskResults,
@@ -175,7 +180,8 @@ export const storage = {
     const currentReward = Number(task.rewardAmount);
     const newReward = currentReward + additionalAmount;
     
-    return this.updateTask(id, { rewardAmount: newReward });
+    // Convert back to string since rewardAmount is stored as string
+    return this.updateTask(id, { rewardAmount: newReward.toString() });
   },
   
   async updateTaskStatus(id: number, status: string): Promise<Task | null> {
@@ -194,24 +200,33 @@ export const storage = {
   ): Promise<{ submissions: any[], totalCount: number }> {
     const { userId, taskId, status, page = 1, limit = 10 } = filters;
     
-    let query = db.select().from(submissions);
-    let countQuery = db.select({ count: db.count() }).from(submissions);
-    
-    // Apply filters directly without building a complex condition
+    // Build the WHERE conditions
+    const conditions = [];
     
     if (taskId !== undefined) {
-      query = query.where(eq(submissions.taskId, taskId));
-      countQuery = countQuery.where(eq(submissions.taskId, taskId));
+      conditions.push(eq(submissions.taskId, taskId));
     }
     
     if (userId !== undefined) {
-      query = query.where(eq(submissions.userId, userId));
-      countQuery = countQuery.where(eq(submissions.userId, userId));
+      conditions.push(eq(submissions.userId, userId));
     }
     
     if (status) {
-      query = query.where(eq(submissions.status, status));
-      countQuery = countQuery.where(eq(submissions.status, status));
+      conditions.push(eq(submissions.status, status));
+    }
+    
+    // Get total count first
+    let countQuery = db.select().from(submissions);
+    for (const condition of conditions) {
+      countQuery = countQuery.where(condition);
+    }
+    const countResult = await countQuery;
+    const totalCount = countResult.length;
+    
+    // Then get paginated results
+    let query = db.select().from(submissions);
+    for (const condition of conditions) {
+      query = query.where(condition);
     }
     
     // Apply sort - most recent first
@@ -221,13 +236,8 @@ export const storage = {
     const offset = (page - 1) * limit;
     query = query.limit(limit).offset(offset);
     
-    // Execute queries
-    const [submissionResults, countResults] = await Promise.all([
-      query,
-      countQuery,
-    ]);
-    
-    const totalCount = Number(countResults[0]?.count || 0);
+    // Execute query
+    const submissionResults = await query;
     
     // Fetch related tasks for each submission
     const submissionsWithTasks = await Promise.all(
