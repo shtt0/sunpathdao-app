@@ -105,12 +105,18 @@ export default function CreateTaskForm({ recreateTaskId }: CreateTaskFormProps) 
         throw new Error("Wallet is not connected");
       }
       
-      // Create a payload for the task
+      // Create a payload for the task with proper type conversions
       const taskData = {
         ...formData,
+        // Convert rewardAmount to string as expected by server
+        rewardAmount: String(formData.rewardAmount),
+        // Convert expiresAt string to Date object
+        expiresAt: new Date(formData.expiresAt),
         routeData: routeData,
         commissionerWalletAddress: walletAddress,
       };
+      
+      console.log('Submitting task with converted data:', taskData);
       
       // 2. Submit the task to the server
       return apiRequest('POST', `${API_ROUTES.TASKS}`, taskData);
