@@ -72,46 +72,86 @@ export default function TaskDetail() {
       // Initialize Google Maps API reference
       const google = window.google;
       
-      // Create bounds for the route first
-      let mapBounds = null;
-      if (routeData.bounds) {
-        mapBounds = new google.maps.LatLngBounds(
-          new google.maps.LatLng(
-            routeData.bounds.southwest.lat,
-            routeData.bounds.southwest.lng
-          ),
-          new google.maps.LatLng(
-            routeData.bounds.northeast.lat,
-            routeData.bounds.northeast.lng
-          )
-        );
+      // 完全に新しいアプローチで実装
+      // まず境界ボックスを確立
+      let center = { lat: 0, lng: 0 };
+      let mapZoom = MAPS_CONFIG.defaultZoom;
+      
+      // ルートの始点と終点の中間点を計算して中心点とする
+      if (routeData.startLocation && routeData.endLocation) {
+        center = {
+          lat: (routeData.startLocation.lat + routeData.endLocation.lat) / 2,
+          lng: (routeData.startLocation.lng + routeData.endLocation.lng) / 2
+        };
+      } else if (routeData.startLocation) {
+        center = {
+          lat: routeData.startLocation.lat,
+          lng: routeData.startLocation.lng
+        };
       }
+      
+      // まずは地図を作成
+      console.log('Creating map with center:', center);
       const map = new google.maps.Map(mapRef.current, {
-        zoom: MAPS_CONFIG.defaultZoom,
-        // Default center is set to the route's start location if bounds aren't available
-        center: { 
-          lat: routeData.startLocation?.lat || MAPS_CONFIG.defaultCenter.lat, 
-          lng: routeData.startLocation?.lng || MAPS_CONFIG.defaultCenter.lng
-        },
+        zoom: 12, // 初期ズームレベルを低めに設定
+        center: center,
         mapTypeId: 'roadmap',
         mapTypeControl: false,
         fullscreenControl: false,
         streetViewControl: false,
       });
       
-      // Set map bounds to show the entire route immediately after creation
-      if (mapBounds) {
-        // Add some padding around the route (in pixels)
-        const padding = { top: 50, right: 50, bottom: 50, left: 50 };
-        map.fitBounds(mapBounds, padding);
+      // ポリラインを描画（これを先に行って境界を確立する）
+      const path = routeData.polyline ? 
+        google.maps.geometry.encoding.decodePath(routeData.polyline) : [];
+      
+      const routeLine = new google.maps.Polyline({
+        path,
+        geodesic: true,
+        strokeColor: '#0088FF',
+        strokeOpacity: 0.8,
+        strokeWeight: 5,
+        map,
+      });
+      
+      // バウンドを作成して適用
+      const bounds = new google.maps.LatLngBounds();
+      
+      // 各ポイントをバウンドに追加
+      if (path.length > 0) {
+        path.forEach((point: any) => {
+          bounds.extend(point);
+        });
+      } else if (routeData.startLocation && routeData.endLocation) {
+        // ポリラインがない場合は始点と終点のみ使用
+        bounds.extend(new google.maps.LatLng(
+          routeData.startLocation.lat,
+          routeData.startLocation.lng
+        ));
+        bounds.extend(new google.maps.LatLng(
+          routeData.endLocation.lat,
+          routeData.endLocation.lng
+        ));
+      }
+      
+      // バウンドが有効かチェック
+      if (!bounds.isEmpty()) {
+        console.log('Fitting map to bounds');
+        // パディングを追加（ピクセル単位）
+        const padding = {
+          top: 50,
+          right: 50,
+          bottom: 50,
+          left: 50
+        };
         
-        // Additional handling to ensure bounds are applied correctly
+        // バウンドを適用（マップを再描画してルート全体を表示）
+        map.fitBounds(bounds, padding);
+        
+        // 確実に適用するために遅延実行
         setTimeout(() => {
-          // Re-fit bounds after a short delay to ensure the map is fully loaded
-          map.fitBounds(mapBounds, padding);
-          // Ensure the bounds are applied by triggering a resize event
-          google.maps.event.trigger(map, 'resize');
-        }, 100);
+          map.fitBounds(bounds, padding);
+        }, 300);
       }
       
       // Create start marker
@@ -146,19 +186,7 @@ export default function TaskDetail() {
         });
       }
       
-      // Draw the route using polyline
-      if (routeData.polyline) {
-        const path = google.maps.geometry.encoding.decodePath(routeData.polyline);
-        
-        new google.maps.Polyline({
-          path,
-          geodesic: true,
-          strokeColor: '#0088FF',
-          strokeOpacity: 0.8,
-          strokeWeight: 5,
-          map,
-        });
-      }
+      // ポリラインは既に描画済みなので、ここでは重複描画しない
       
       // Mark map as loaded
       setMapLoaded(true);
