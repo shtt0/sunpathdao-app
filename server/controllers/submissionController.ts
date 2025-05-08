@@ -12,12 +12,12 @@ export const SubmissionController = {
         limit = '10'
       } = req.query;
       
-      const { submissions, totalCount } = await storage.getSubmissions(
-        userId ? parseInt(userId as string) : undefined,
-        status as string | undefined,
-        parseInt(page as string),
-        parseInt(limit as string)
-      );
+      const { submissions, totalCount } = await storage.getSubmissions({
+        userId: userId ? parseInt(userId as string) : undefined,
+        status: status as string | undefined,
+        page: parseInt(page as string),
+        limit: parseInt(limit as string),
+      });
       
       res.json({ submissions, totalCount });
     } catch (error) {
