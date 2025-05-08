@@ -130,8 +130,8 @@ export default function CreateTaskForm({ recreateTaskId }: CreateTaskFormProps) 
       // Invalidate the tasks query to refresh the list
       queryClient.invalidateQueries({ queryKey: [API_ROUTES.TASKS] });
       
-      // Navigate to the commissioner dashboard
-      navigate('/commissioner');
+      // Navigate to the home page (root) since /commissioner might not exist
+      navigate('/');
     },
     onError: (error: any) => {
       console.error('Error creating task:', error);
@@ -559,7 +559,7 @@ export default function CreateTaskForm({ recreateTaskId }: CreateTaskFormProps) 
                 <Button 
                   type="button" 
                   variant="outline" 
-                  onClick={() => navigate('/commissioner')}
+                  onClick={() => navigate('/')}
                 >
                   Cancel
                 </Button>

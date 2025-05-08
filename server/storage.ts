@@ -53,45 +53,33 @@ export const storage = {
     let query = db.select().from(tasks);
     let countQuery = db.select({ count: db.count() }).from(tasks);
     
-    // Apply filters
-    const whereConditions = [];
+    // Apply filters directly without building a complex condition
     
     if (userId !== undefined) {
-      whereConditions.push(eq(tasks.userId, userId));
+      query = query.where(eq(tasks.userId, userId));
+      countQuery = countQuery.where(eq(tasks.userId, userId));
     }
     
     if (status) {
-      whereConditions.push(eq(tasks.status, status));
+      query = query.where(eq(tasks.status, status));
+      countQuery = countQuery.where(eq(tasks.status, status));
     }
     
     if (country) {
-      whereConditions.push(eq(tasks.country, country));
+      query = query.where(eq(tasks.country, country));
+      countQuery = countQuery.where(eq(tasks.country, country));
     }
     
     if (search) {
-      whereConditions.push(
-        or(
-          like(tasks.title, `%${search}%`),
-          like(tasks.description, `%${search}%`),
-          like(tasks.city, `%${search}%`),
-          like(tasks.startLocation, `%${search}%`),
-          like(tasks.endLocation, `%${search}%`)
-        )
+      const searchCondition = or(
+        like(tasks.title, `%${search}%`),
+        like(tasks.description, `%${search}%`),
+        like(tasks.city, `%${search}%`),
+        like(tasks.startLocation, `%${search}%`),
+        like(tasks.endLocation, `%${search}%`)
       );
-    }
-    
-    if (whereConditions.length > 0) {
-      // Apply all conditions with AND
-      if (whereConditions.length === 1) {
-        // If there's only one condition, use it directly
-        query = query.where(whereConditions[0]);
-        countQuery = countQuery.where(whereConditions[0]);
-      } else {
-        // If there are multiple conditions, combine them with AND
-        const condition = whereConditions.reduce((acc, curr) => and(acc, curr));
-        query = query.where(condition);
-        countQuery = countQuery.where(condition);
-      }
+      query = query.where(searchCondition);
+      countQuery = countQuery.where(searchCondition);
     }
     
     // Apply sort
@@ -209,33 +197,21 @@ export const storage = {
     let query = db.select().from(submissions);
     let countQuery = db.select({ count: db.count() }).from(submissions);
     
-    // Apply filters
-    const whereConditions = [];
+    // Apply filters directly without building a complex condition
     
     if (taskId !== undefined) {
-      whereConditions.push(eq(submissions.taskId, taskId));
+      query = query.where(eq(submissions.taskId, taskId));
+      countQuery = countQuery.where(eq(submissions.taskId, taskId));
     }
     
     if (userId !== undefined) {
-      whereConditions.push(eq(submissions.userId, userId));
+      query = query.where(eq(submissions.userId, userId));
+      countQuery = countQuery.where(eq(submissions.userId, userId));
     }
     
     if (status) {
-      whereConditions.push(eq(submissions.status, status));
-    }
-    
-    if (whereConditions.length > 0) {
-      // Apply all conditions with AND
-      if (whereConditions.length === 1) {
-        // If there's only one condition, use it directly
-        query = query.where(whereConditions[0]);
-        countQuery = countQuery.where(whereConditions[0]);
-      } else {
-        // If there are multiple conditions, combine them with AND
-        const condition = whereConditions.reduce((acc, curr) => and(acc, curr));
-        query = query.where(condition);
-        countQuery = countQuery.where(condition);
-      }
+      query = query.where(eq(submissions.status, status));
+      countQuery = countQuery.where(eq(submissions.status, status));
     }
     
     // Apply sort - most recent first
