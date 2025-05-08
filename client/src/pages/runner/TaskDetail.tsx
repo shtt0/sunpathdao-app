@@ -69,23 +69,13 @@ export default function TaskDetail() {
         return;
       }
       
-      // Create the map
+      // Initialize Google Maps API reference
       const google = window.google;
-      const map = new google.maps.Map(mapRef.current, {
-        zoom: MAPS_CONFIG.defaultZoom,
-        center: { 
-          lat: routeData.startLocation?.lat || 0, 
-          lng: routeData.startLocation?.lng || 0 
-        },
-        mapTypeId: 'roadmap',
-        mapTypeControl: false,
-        fullscreenControl: false,
-        streetViewControl: false,
-      });
       
-      // Set map bounds to show the entire route
+      // Create bounds for the route first
+      let mapBounds = null;
       if (routeData.bounds) {
-        const bounds = new google.maps.LatLngBounds(
+        mapBounds = new google.maps.LatLngBounds(
           new google.maps.LatLng(
             routeData.bounds.southwest.lat,
             routeData.bounds.southwest.lng
@@ -95,7 +85,33 @@ export default function TaskDetail() {
             routeData.bounds.northeast.lng
           )
         );
-        map.fitBounds(bounds);
+      }
+      const map = new google.maps.Map(mapRef.current, {
+        zoom: MAPS_CONFIG.defaultZoom,
+        // Default center is set to the route's start location if bounds aren't available
+        center: { 
+          lat: routeData.startLocation?.lat || MAPS_CONFIG.defaultCenter.lat, 
+          lng: routeData.startLocation?.lng || MAPS_CONFIG.defaultCenter.lng
+        },
+        mapTypeId: 'roadmap',
+        mapTypeControl: false,
+        fullscreenControl: false,
+        streetViewControl: false,
+      });
+      
+      // Set map bounds to show the entire route immediately after creation
+      if (mapBounds) {
+        // Add some padding around the route (in pixels)
+        const padding = { top: 50, right: 50, bottom: 50, left: 50 };
+        map.fitBounds(mapBounds, padding);
+        
+        // Additional handling to ensure bounds are applied correctly
+        setTimeout(() => {
+          // Re-fit bounds after a short delay to ensure the map is fully loaded
+          map.fitBounds(mapBounds, padding);
+          // Ensure the bounds are applied by triggering a resize event
+          google.maps.event.trigger(map, 'resize');
+        }, 100);
       }
       
       // Create start marker
