@@ -12,8 +12,7 @@ import {
   GoogleMap, 
   useJsApiLoader, 
   Marker, 
-  DirectionsRenderer, 
-  Autocomplete 
+  DirectionsRenderer
 } from '@react-google-maps/api';
 
 import {
@@ -60,7 +59,7 @@ interface CreateTaskFormProps {
 }
 
 // Google Maps configuration
-const libraries = ["places"];
+const libraries: ("drawing" | "geometry" | "localContext" | "visualization")[] = [];
 const mapContainerStyle = {
   width: '100%',
   height: '400px',
@@ -75,10 +74,6 @@ export default function CreateTaskForm({ recreateTaskId }: CreateTaskFormProps) 
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [directionsResponse, setDirectionsResponse] = useState<google.maps.DirectionsResult | null>(null);
   const [routeData, setRouteData] = useState<any>(null);
-  const originRef = useRef<HTMLInputElement>(null);
-  const destinationRef = useRef<HTMLInputElement>(null);
-  const startAutocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
-  const endAutocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   
   // Load Google Maps API
   const { isLoaded } = useJsApiLoader({
@@ -202,51 +197,8 @@ export default function CreateTaskForm({ recreateTaskId }: CreateTaskFormProps) 
     setMap(null);
   }, []);
 
-  // Function to handle origin autocomplete load
-  const onLoadOriginAutocomplete = (autocomplete: google.maps.places.Autocomplete) => {
-    console.log('Origin autocomplete loaded');
-    startAutocompleteRef.current = autocomplete;
-  };
-
-  // Function to handle destination autocomplete load
-  const onLoadDestinationAutocomplete = (autocomplete: google.maps.places.Autocomplete) => {
-    console.log('Destination autocomplete loaded');
-    endAutocompleteRef.current = autocomplete;
-  };
-
-  // Function to handle origin place changed
-  const onOriginChanged = () => {
-    if (startAutocompleteRef.current) {
-      const place = startAutocompleteRef.current.getPlace();
-      if (place.formatted_address) {
-        console.log('Origin place selected:', place.formatted_address);
-        form.setValue('startLocation', place.formatted_address);
-        form.clearErrors('startLocation');
-        
-        // Calculate route if both locations are set
-        if (form.getValues('endLocation')) {
-          calculateRoute();
-        }
-      }
-    }
-  };
-
-  // Function to handle destination place changed
-  const onDestinationChanged = () => {
-    if (endAutocompleteRef.current) {
-      const place = endAutocompleteRef.current.getPlace();
-      if (place.formatted_address) {
-        console.log('Destination place selected:', place.formatted_address);
-        form.setValue('endLocation', place.formatted_address);
-        form.clearErrors('endLocation');
-        
-        // Calculate route if both locations are set
-        if (form.getValues('startLocation')) {
-          calculateRoute();
-        }
-      }
-    }
-  };
+  // Relocated autocomplete functionality due to API restrictions
+  // Now using manual text input for locations
 
   // Function to calculate route
   const calculateRoute = () => {
@@ -512,19 +464,10 @@ export default function CreateTaskForm({ recreateTaskId }: CreateTaskFormProps) 
                         <FormLabel>Start Location</FormLabel>
                         <FormControl>
                           <div>
-                            <Autocomplete
-                              onLoad={onLoadOriginAutocomplete}
-                              onPlaceChanged={onOriginChanged}
-                              options={{
-                                fields: ["formatted_address", "geometry", "name"],
-                              }}
-                            >
-                              <Input
-                                ref={originRef}
-                                placeholder="Enter start location"
-                                {...field}
-                              />
-                            </Autocomplete>
+                            <Input
+                              placeholder="Enter start location (eg. Tokyo Station)"
+                              {...field}
+                            />
                           </div>
                         </FormControl>
                         <FormMessage />
@@ -541,19 +484,10 @@ export default function CreateTaskForm({ recreateTaskId }: CreateTaskFormProps) 
                         <FormLabel>End Location</FormLabel>
                         <FormControl>
                           <div>
-                            <Autocomplete
-                              onLoad={onLoadDestinationAutocomplete}
-                              onPlaceChanged={onDestinationChanged}
-                              options={{
-                                fields: ["formatted_address", "geometry", "name"],
-                              }}
-                            >
-                              <Input
-                                ref={destinationRef}
-                                placeholder="Enter end location"
-                                {...field}
-                              />
-                            </Autocomplete>
+                            <Input
+                              placeholder="Enter end location (eg. Shibuya Station)"
+                              {...field}
+                            />
                           </div>
                         </FormControl>
                         <FormMessage />
