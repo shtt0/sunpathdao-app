@@ -57,8 +57,17 @@ export const TaskController = {
   // Create a new task
   async createTask(req: Request, res: Response) {
     try {
+      // Pre-process the expiresAt field - convert string to Date object
+      const requestData = { 
+        ...req.body,
+        // If expiresAt is a string that looks like a date, convert it to a Date object
+        expiresAt: req.body.expiresAt ? new Date(req.body.expiresAt) : undefined
+      };
+      
+      console.log('Processing task data with parsed date:', requestData);
+      
       // Parse and validate request body
-      const taskData = insertTaskSchema.parse(req.body);
+      const taskData = insertTaskSchema.parse(requestData);
       
       // If Solana transaction related data is provided
       const transactionId = req.body.transactionId;

@@ -32,4 +32,5 @@ export interface TaskFilters {
   sortBy?: 'newest' | 'oldest' | 'reward-high' | 'reward-low' | 'expiry';
   page: number;
   limit: number;
+  userId?: number;
 }

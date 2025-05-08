@@ -110,8 +110,8 @@ export default function CreateTaskForm({ recreateTaskId }: CreateTaskFormProps) 
         ...formData,
         // Convert rewardAmount to string as expected by server
         rewardAmount: String(formData.rewardAmount),
-        // Convert expiresAt string to Date object
-        expiresAt: new Date(formData.expiresAt),
+        // Keep expiresAt as ISO string - server will convert to Date
+        expiresAt: new Date(formData.expiresAt).toISOString(),
         routeData: routeData,
         commissionerWalletAddress: walletAddress,
       };
