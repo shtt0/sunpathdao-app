@@ -263,7 +263,7 @@ export default function TaskDetail() {
         videoData: base64Data,
         startTime: recordingData.startTime.toISOString(),
         endTime: recordingData.endTime.toISOString(),
-        walletAddress, // 重要: ウォレットアドレスを追加
+        walletAddress: walletAddress || undefined, // nullの場合はundefinedにして型エラーを解消
       });
       
       setIsRecording(false);

@@ -94,13 +94,20 @@ export const SubmissionController = {
         return res.status(400).json({ message: 'User ID or wallet address is required' });
       }
       
+      // Save video data to file
+      const videoUrl = await storage.saveVideoFile(videoData);
+      
+      // Parse date strings to actual Date objects
+      const parsedStartTime = new Date(startTime);
+      const parsedEndTime = new Date(endTime);
+      
       // Create submission
       const newSubmission = await storage.createSubmission({
         taskId: parseInt(taskId),
         userId,
-        videoData,
-        startTime,
-        endTime
+        videoUrl, // Use the URL of the saved video file
+        startTime: parsedStartTime,
+        endTime: parsedEndTime
       });
       
       res.status(201).json({ submission: newSubmission });
