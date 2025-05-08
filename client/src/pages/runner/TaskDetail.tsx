@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useLocation } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { useWallet } from '@/contexts/WalletContext';
-import { API_ROUTES } from '@/lib/constants';
+import { API_ROUTES, MAPS_CONFIG } from '@/lib/constants';
 import { formatSOL, formatDate, calculateTimeLeft, blobToBase64 } from '@/lib/utils';
 import { VideoRecordingData } from '@shared/types';
 import VideoRecorder from '@/components/runner/VideoRecorder';
@@ -19,6 +19,8 @@ export default function TaskDetail() {
   const { walletStatus, walletAddress } = useWallet();
   const [isRecording, setIsRecording] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const mapRef = useRef<HTMLDivElement>(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
   
   // Fetch task details
   const { data: taskData, isLoading, error } = useQuery({
@@ -29,6 +31,125 @@ export default function TaskDetail() {
       return response.json();
     },
   });
+  
+  // Initialize Google Maps after task data is loaded
+  useEffect(() => {
+    if (!taskData?.task || !taskData.task.routeData || !mapRef.current) return;
+    
+    const task = taskData.task;
+    
+    // Skip if no route data or map already loaded
+    if (!task.routeData || mapLoaded) return;
+    
+    // Check for Google Maps API
+    if (!window.google || !window.google.maps) {
+      // Load Google Maps API if not already loaded
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}&libraries=places,geometry`;
+      script.async = true;
+      script.defer = true;
+      script.onload = () => initMap(task);
+      document.head.appendChild(script);
+    } else {
+      // Initialize map directly if API already loaded
+      initMap(task);
+    }
+  }, [taskData, mapLoaded]);
+  
+  // Initialize map with route data
+  const initMap = (task: any) => {
+    if (!mapRef.current || mapLoaded) return;
+    
+    try {
+      // Extract route data
+      const { routeData } = task;
+      
+      if (!routeData) {
+        console.error('No route data available');
+        return;
+      }
+      
+      // Create the map
+      const google = window.google;
+      const map = new google.maps.Map(mapRef.current, {
+        zoom: MAPS_CONFIG.defaultZoom,
+        center: { 
+          lat: routeData.startLocation?.lat || 0, 
+          lng: routeData.startLocation?.lng || 0 
+        },
+        mapTypeId: 'roadmap',
+        mapTypeControl: false,
+        fullscreenControl: false,
+        streetViewControl: false,
+      });
+      
+      // Set map bounds to show the entire route
+      if (routeData.bounds) {
+        const bounds = new google.maps.LatLngBounds(
+          new google.maps.LatLng(
+            routeData.bounds.southwest.lat,
+            routeData.bounds.southwest.lng
+          ),
+          new google.maps.LatLng(
+            routeData.bounds.northeast.lat,
+            routeData.bounds.northeast.lng
+          )
+        );
+        map.fitBounds(bounds);
+      }
+      
+      // Create start marker
+      if (routeData.startLocation) {
+        new google.maps.Marker({
+          position: { 
+            lat: routeData.startLocation.lat, 
+            lng: routeData.startLocation.lng 
+          },
+          map,
+          title: 'Start',
+          icon: {
+            url: 'https://maps.google.com/mapfiles/ms/icons/green-dot.png',
+            scaledSize: new google.maps.Size(32, 32),
+          },
+        });
+      }
+      
+      // Create end marker
+      if (routeData.endLocation) {
+        new google.maps.Marker({
+          position: { 
+            lat: routeData.endLocation.lat, 
+            lng: routeData.endLocation.lng 
+          },
+          map,
+          title: 'End',
+          icon: {
+            url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
+            scaledSize: new google.maps.Size(32, 32),
+          },
+        });
+      }
+      
+      // Draw the route using polyline
+      if (routeData.polyline) {
+        const path = google.maps.geometry.encoding.decodePath(routeData.polyline);
+        
+        new google.maps.Polyline({
+          path,
+          geodesic: true,
+          strokeColor: '#0088FF',
+          strokeOpacity: 0.8,
+          strokeWeight: 5,
+          map,
+        });
+      }
+      
+      // Mark map as loaded
+      setMapLoaded(true);
+    } catch (e) {
+      console.error('Error initializing map:', e);
+    }
+  };
   
   // Submit task completion mutation
   const submitTaskMutation = useMutation({
@@ -185,7 +306,11 @@ export default function TaskDetail() {
               </div>
               
               <div className="border-t border-neutral-200 px-4 py-5 sm:px-6">
-                <div className="map-container" id="task-map"></div>
+                <div 
+                  ref={mapRef} 
+                  className="map-container w-full h-96 rounded-lg overflow-hidden mb-6" 
+                  id="task-map"
+                ></div>
                 
                 <div className="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
                   <div className="sm:col-span-3">
