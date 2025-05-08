@@ -74,9 +74,9 @@ export default function CreateTaskForm({ recreateTaskId }: CreateTaskFormProps) 
   const [isLockingFunds, setIsLockingFunds] = useState(false);
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [directionsResponse, setDirectionsResponse] = useState<google.maps.DirectionsResult | null>(null);
-  const [locationSelectionMode, setLocationSelectionMode] = useState<'start' | 'end' | null>(null);
-  const [originLocation, setOriginLocation] = useState<google.maps.LatLngLiteral | null>(null);
-  const [destinationLocation, setDestinationLocation] = useState<google.maps.LatLngLiteral | null>(null);
+  const [routeData, setRouteData] = useState<any>(null);
+  const originRef = useRef<HTMLInputElement>(null);
+  const destinationRef = useRef<HTMLInputElement>(null);
   const startAutocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const endAutocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   
@@ -102,244 +102,51 @@ export default function CreateTaskForm({ recreateTaskId }: CreateTaskFormProps) 
     },
   });
 
-  // Load Google Maps API
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    // Debug message
-    console.log('Loading Google Maps API...');
-    console.log('API Key available:', !!import.meta.env.VITE_GOOGLE_MAPS_API_KEY);
-
-    // Check if the Google Maps API script is already loaded
-    if (window.google && window.google.maps) {
-      console.log('Google Maps API already loaded');
-      setMapIsLoaded(true);
-      return;
-    }
-
-    // Load the Google Maps API
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''}&libraries=places`;
-    script.async = true;
-    script.defer = true;
-    
-    script.onload = () => {
-      console.log('Google Maps API loaded successfully');
-      setMapIsLoaded(true);
-    };
-    
-    script.onerror = () => {
-      console.error('Failed to load Google Maps API');
-    };
-
-    document.head.appendChild(script);
-
-    return () => {
-      // Cleanup
-      if (document.head.contains(script)) {
-        document.head.removeChild(script);
+  // Form submission handler
+  const createTaskMutation = useMutation({
+    mutationFn: async (formData: FormValues) => {
+      // 1. Create a transaction to lock the funds
+      if (!walletAddress) {
+        throw new Error("Wallet is not connected");
       }
-    };
-  }, []);
-
-  // Initialize map when API is loaded
-  useEffect(() => {
-    if (!mapIsLoaded) {
-      console.log('Map not loaded yet, skipping map initialization');
-      return;
-    }
-
-    console.log('Initializing map now that API is loaded');
-    
-    const mapContainerElement = document.getElementById('map-container');
-    if (!mapContainerElement) {
-      console.error('Map container element not found');
-      return;
-    }
-
-    try {
-      // Create the map instance
-      const map = new window.google.maps.Map(mapContainerElement, {
-        center: { lat: 35.6812, lng: 139.7671 }, // Tokyo, Japan
-        zoom: 14,
-        mapTypeId: window.google.maps.MapTypeId.ROADMAP,
-        fullscreenControl: false,
-      });
       
-      console.log('Map instance created successfully');
-
-      // Create directions renderer
-      const renderer = new window.google.maps.DirectionsRenderer({
-        draggable: true, // Allow route to be dragged/adjusted
-        map: map
-      });
-      setDirectionsRenderer(renderer);
-      
-      // Store map instance in state for later use
-      setMapInstance(map);
-      
-      // Return cleanup function
-      return () => {
-        // Cleanup - remove event listeners
-        if (window.google && window.google.maps) {
-          window.google.maps.event.clearInstanceListeners(map);
-        }
-        if (startMarker) startMarker.setMap(null);
-        if (endMarker) endMarker.setMap(null);
-        if (directionsRenderer) directionsRenderer.setMap(null);
+      // Create a payload for the task
+      const taskData = {
+        ...formData,
+        routeData: routeData,
+        commissionerWalletAddress: walletAddress,
       };
-    } catch (error) {
-      console.error('Error initializing map:', error);
+      
+      // 2. Submit the task to the server
+      return apiRequest(`${API_ROUTES.TASKS}`, {
+        method: 'POST',
+        body: JSON.stringify(taskData),
+      });
+    },
+    onSuccess: (data) => {
       toast({
-        title: 'Map Error',
-        description: 'Failed to initialize Google Maps. Please try refreshing the page.',
+        title: 'Task Created',
+        description: 'Your task has been created successfully',
+      });
+      
+      // Invalidate the tasks query to refresh the list
+      queryClient.invalidateQueries({ queryKey: [API_ROUTES.TASKS] });
+      
+      // Navigate to the commissioner dashboard
+      navigate('/commissioner');
+    },
+    onError: (error: any) => {
+      console.error('Error creating task:', error);
+      
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to create task. Please try again.',
         variant: 'destructive',
       });
-    }
-  }, [mapIsLoaded]);
-  
-  // Separate effect for map click listener that depends on the map instance
-  useEffect(() => {
-    if (!mapInstance || !mapIsLoaded) {
-      console.log('Map instance or API not available for click handler');
-      return;
-    }
-    
-    console.log('Setting up map click listener');
-    
-    // Add click listener to map for setting markers
-    const clickListener = window.google.maps.event.addListener(mapInstance, 'click', (event: any) => {
-      console.log('Map clicked!');
-      console.log('Current location selection mode:', locationSelectionMode);
       
-      if (!locationSelectionMode) {
-        console.log('No location selection mode active, ignoring click');
-        return;
-      }
-      
-      const clickedLocation = event.latLng;
-      console.log('Clicked location:', clickedLocation.lat(), clickedLocation.lng());
-      
-      try {
-        const geocoder = new window.google.maps.Geocoder();
-        
-        if (locationSelectionMode === 'start') {
-          console.log('Processing start location selection');
-          // Clear previous start marker if it exists
-          if (startMarker) {
-            startMarker.setMap(null);
-          }
-          
-          // Create new start marker
-          const marker = new window.google.maps.Marker({
-            position: clickedLocation,
-            map: mapInstance,
-            title: 'Start Location',
-            label: 'S',
-            animation: window.google.maps.Animation.DROP
-          });
-          setStartMarker(marker);
-          
-          // Get address from coordinates and update form
-          geocoder.geocode({ location: clickedLocation }, (results: any, status: any) => {
-            console.log('Geocoding result:', status, results);
-            if (status === 'OK' && results && results[0]) {
-              const address = results[0].formatted_address;
-              console.log('Found address:', address);
-              form.setValue('startLocation', address);
-              
-              // Try to update route if both locations are set
-              const endLocation = form.getValues('endLocation');
-              if (endLocation) {
-                displayRoute(address, endLocation);
-              }
-              
-              toast({
-                title: 'Start Location Set',
-                description: `Selected: ${address}`,
-              });
-            } else {
-              console.error('Geocoding failed:', status);
-              toast({
-                title: 'Location Error',
-                description: 'Could not determine address for this location',
-                variant: 'destructive',
-              });
-            }
-          });
-          
-          // Reset selection mode
-          console.log('Resetting location selection mode');
-          setLocationSelectionMode(null);
-        }
-        else if (locationSelectionMode === 'end') {
-          console.log('Processing end location selection');
-          // Clear previous end marker if it exists
-          if (endMarker) {
-            endMarker.setMap(null);
-          }
-          
-          // Create new end marker
-          const marker = new window.google.maps.Marker({
-            position: clickedLocation,
-            map: mapInstance,
-            title: 'End Location',
-            label: 'E',
-            animation: window.google.maps.Animation.DROP
-          });
-          setEndMarker(marker);
-          
-          // Get address from coordinates and update form
-          geocoder.geocode({ location: clickedLocation }, (results: any, status: any) => {
-            console.log('Geocoding result:', status, results);
-            if (status === 'OK' && results && results[0]) {
-              const address = results[0].formatted_address;
-              console.log('Found address:', address);
-              form.setValue('endLocation', address);
-              
-              // Try to update route if both locations are set
-              const startLocation = form.getValues('startLocation');
-              if (startLocation) {
-                displayRoute(startLocation, address);
-              }
-              
-              toast({
-                title: 'End Location Set',
-                description: `Selected: ${address}`,
-              });
-            } else {
-              console.error('Geocoding failed:', status);
-              toast({
-                title: 'Location Error',
-                description: 'Could not determine address for this location',
-                variant: 'destructive',
-              });
-            }
-          });
-          
-          // Reset selection mode
-          console.log('Resetting location selection mode');
-          setLocationSelectionMode(null);
-        }
-      } catch (error) {
-        console.error('Error processing map click:', error);
-        toast({
-          title: 'Error',
-          description: 'An error occurred when setting the location',
-          variant: 'destructive',
-        });
-        setLocationSelectionMode(null);
-      }
-    });
-
-    return () => {
-      // Cleanup - remove click listener
-      if (window.google && window.google.maps && clickListener) {
-        window.google.maps.event.removeListener(clickListener);
-        console.log('Removed map click listener');
-      }
-    };
-  }, [mapInstance, mapIsLoaded, locationSelectionMode, form]);
+      setIsLockingFunds(false);
+    },
+  });
 
   // If recreateTaskId is provided, fetch the task data to prefill the form
   const { data: taskData, isLoading: isLoadingTask } = useQuery({
@@ -371,493 +178,476 @@ export default function CreateTaskForm({ recreateTaskId }: CreateTaskFormProps) 
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16), // Default to 7 days from now
       });
 
-      // If there's route data, update the map
-      if (task.routeData && mapInstance) {
-        displayRoute(task.startLocation, task.endLocation);
+      // If there's route data and the map is loaded, calculate route
+      if (task.routeData && isLoaded) {
+        // Set timeout to wait for map to be fully loaded
+        setTimeout(() => {
+          calculateRoute();
+        }, 1000);
       }
     }
-  }, [taskData, mapInstance, form]);
+  }, [taskData, isLoaded, form]);
+  
+  // Function to handle map load
+  const onLoad = useCallback(function callback(map: google.maps.Map) {
+    console.log('Google Map loaded successfully');
+    map.setZoom(14);
+    map.setCenter(MAPS_CONFIG.defaultCenter);
+    setMap(map);
+  }, []);
 
-  // Function to display route on map
-  const displayRoute = (start: string, end: string) => {
-    if (!mapIsLoaded) {
-      console.log('Map not loaded, cannot display route');
-      return;
-    }
-    
-    if (!mapInstance) {
-      console.log('Map instance not available, cannot display route');
-      return;
-    }
-    
-    if (!directionsRenderer) {
-      console.log('Directions renderer not available, cannot display route');
-      return;
-    }
-    
-    console.log('Calculating route from', start, 'to', end);
+  // Function to handle map unmount
+  const onUnmount = useCallback(function callback() {
+    console.log('Google Map unmounted');
+    setMap(null);
+  }, []);
 
-    try {
-      const directionsService = new window.google.maps.DirectionsService();
-      
-      // Use the stored directionsRenderer to maintain consistency
-      directionsRenderer.setMap(mapInstance);
+  // Function to handle origin autocomplete load
+  const onLoadOriginAutocomplete = (autocomplete: google.maps.places.Autocomplete) => {
+    console.log('Origin autocomplete loaded');
+    startAutocompleteRef.current = autocomplete;
+  };
 
-      directionsService.route(
-        {
-          origin: start,
-          destination: end,
-          travelMode: window.google.maps.TravelMode.WALKING,
-        },
-        (response: any, status: any) => {
-          console.log('Directions response status:', status);
-          
-          if (status === window.google.maps.DirectionsStatus.OK) {
-            console.log('Route calculation successful');
-            directionsRenderer.setDirections(response);
-            setRoute(response);
-            
-            // If markers exist, hide them when showing the route
-            if (startMarker) startMarker.setMap(null);
-            if (endMarker) endMarker.setMap(null);
-            
-            toast({
-              title: 'Route Calculated',
-              description: `Distance: ${response.routes[0].legs[0].distance.text}, Duration: ${response.routes[0].legs[0].duration.text}`,
-            });
-          } else {
-            console.error('Directions request failed:', status);
-            toast({
-              title: 'Route Error',
-              description: 'Could not find a route between the locations. Try different locations.',
-              variant: 'destructive',
-            });
-          }
+  // Function to handle destination autocomplete load
+  const onLoadDestinationAutocomplete = (autocomplete: google.maps.places.Autocomplete) => {
+    console.log('Destination autocomplete loaded');
+    endAutocompleteRef.current = autocomplete;
+  };
+
+  // Function to handle origin place changed
+  const onOriginChanged = () => {
+    if (startAutocompleteRef.current) {
+      const place = startAutocompleteRef.current.getPlace();
+      if (place.formatted_address) {
+        console.log('Origin place selected:', place.formatted_address);
+        form.setValue('startLocation', place.formatted_address);
+        form.clearErrors('startLocation');
+        
+        // Calculate route if both locations are set
+        if (form.getValues('endLocation')) {
+          calculateRoute();
         }
-      );
-    } catch (error) {
-      console.error('Error calculating route:', error);
-      toast({
-        title: 'Route Error',
-        description: 'An error occurred while calculating the route',
-        variant: 'destructive',
-      });
+      }
     }
   };
 
-  // Update route when start or end location changes
-  const updateRoute = () => {
+  // Function to handle destination place changed
+  const onDestinationChanged = () => {
+    if (endAutocompleteRef.current) {
+      const place = endAutocompleteRef.current.getPlace();
+      if (place.formatted_address) {
+        console.log('Destination place selected:', place.formatted_address);
+        form.setValue('endLocation', place.formatted_address);
+        form.clearErrors('endLocation');
+        
+        // Calculate route if both locations are set
+        if (form.getValues('startLocation')) {
+          calculateRoute();
+        }
+      }
+    }
+  };
+
+  // Function to calculate route
+  const calculateRoute = () => {
+    if (!isLoaded || !map) return;
+    
     const startLocation = form.getValues('startLocation');
     const endLocation = form.getValues('endLocation');
     
-    if (startLocation && endLocation) {
-      displayRoute(startLocation, endLocation);
-    }
-  };
-
-  // Create task mutation
-  const createTaskMutation = useMutation({
-    mutationFn: async (data: FormValues & { routeData?: any, transactionId?: string }) => {
-      const response = await apiRequest('POST', API_ROUTES.TASKS, data);
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [API_ROUTES.TASKS] });
+    if (!startLocation || !endLocation) {
       toast({
-        title: 'Task Created',
-        description: 'Your task has been successfully created',
-      });
-      navigate('/commissioner/dashboard');
-    },
-    onError: (error) => {
-      console.error('Error creating task:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to create task. Please try again.',
+        title: 'Missing Location',
+        description: 'Please set both start and end locations',
         variant: 'destructive',
       });
-      setIsLockingFunds(false);
-    },
-  });
+      return;
+    }
+    
+    console.log('Calculating route from', startLocation, 'to', endLocation);
+    
+    const directionsService = new google.maps.DirectionsService();
+    
+    directionsService.route(
+      {
+        origin: startLocation,
+        destination: endLocation,
+        travelMode: google.maps.TravelMode.WALKING,
+      },
+      (result, status) => {
+        if (status === google.maps.DirectionsStatus.OK && result) {
+          console.log('Route calculated successfully');
+          setDirectionsResponse(result);
+          
+          // Extract route info for saving
+          const routeDataObj = {
+            distance: result.routes[0].legs[0].distance?.text || '',
+            duration: result.routes[0].legs[0].duration?.text || '',
+            start_location: {
+              lat: result.routes[0].legs[0].start_location.lat(),
+              lng: result.routes[0].legs[0].start_location.lng(),
+            },
+            end_location: {
+              lat: result.routes[0].legs[0].end_location.lat(),
+              lng: result.routes[0].legs[0].end_location.lng(),
+            },
+            polyline: result.routes[0].overview_polyline,
+          };
+          
+          console.log('Route data:', routeDataObj);
+          setRouteData(routeDataObj);
+          
+          toast({
+            title: 'Route Calculated',
+            description: `Distance: ${routeDataObj.distance}, Duration: ${routeDataObj.duration}`,
+          });
+        } else {
+          console.error('Directions request failed:', status);
+          toast({
+            title: 'Route Error',
+            description: `Could not calculate route: ${status}`,
+            variant: 'destructive',
+          });
+        }
+      }
+    );
+  };
 
-  // Form submission handler
+  // Function to clear route
+  const clearRoute = () => {
+    setDirectionsResponse(null);
+    setRouteData(null);
+    form.setValue('startLocation', '');
+    form.setValue('endLocation', '');
+    
+    if (originRef.current) originRef.current.value = '';
+    if (destinationRef.current) destinationRef.current.value = '';
+  };
+
+  // Handle form submission
   const onSubmit = async (values: FormValues) => {
-    if (!walletAddress) {
+    if (walletStatus !== 'connected') {
       toast({
         title: 'Wallet Not Connected',
-        description: 'Please connect your wallet first',
+        description: 'Please connect your wallet to create a task',
         variant: 'destructive',
       });
       return;
     }
-
-    if (!route) {
+    
+    if (!routeData) {
       toast({
         title: 'Route Required',
-        description: 'Please select a valid route on the map',
+        description: 'Please set both start and end locations and calculate a route',
         variant: 'destructive',
       });
       return;
     }
-
+    
     try {
       setIsLockingFunds(true);
-
-      // Prepare route data to save
-      const routeData = {
-        bounds: route.routes[0].bounds,
-        distance: route.routes[0].legs[0].distance,
-        duration: route.routes[0].legs[0].duration,
-        polyline: route.routes[0].overview_polyline,
-        startLocation: {
-          lat: route.routes[0].legs[0].start_location.lat(),
-          lng: route.routes[0].legs[0].start_location.lng(),
-        },
-        endLocation: {
-          lat: route.routes[0].legs[0].end_location.lat(),
-          lng: route.routes[0].legs[0].end_location.lng(),
-        },
-      };
-
-      // Create a transaction to lock funds (in a real app, this would go to an escrow account)
-      // For this demo, we'll just verify the transaction was created and signed
-      const escrowPubkey = new PublicKey('11111111111111111111111111111111'); // Placeholder address
-      const transaction = await createTransferTransaction(
-        new PublicKey(walletAddress),
-        escrowPubkey,
-        values.rewardAmount
-      );
-
-      // Ask user to sign the transaction
-      const signature = await signAndSendTransaction(transaction);
-
-      // Submit the task with the transaction ID
-      createTaskMutation.mutate({
-        ...values,
-        routeData,
-        transactionId: signature,
-      });
-
+      
+      // Submit the form data
+      await createTaskMutation.mutateAsync(values);
+      
     } catch (error) {
-      console.error('Transaction error:', error);
-      toast({
-        title: 'Transaction Failed',
-        description: 'Failed to lock funds for the task. Please try again.',
-        variant: 'destructive',
-      });
+      console.error('Error submitting form:', error);
       setIsLockingFunds(false);
     }
   };
 
-  // Check if wallet is connected
-  if (walletStatus !== 'connected') {
+  // Render loading state
+  if (!isLoaded) {
     return (
-      <div className="p-6 bg-white rounded-lg shadow">
+      <div className="flex items-center justify-center h-[400px]">
         <div className="text-center">
-          <h2 className="text-xl font-semibold mb-4">Wallet Not Connected</h2>
-          <p className="mb-4">You need to connect your wallet to create a task.</p>
+          <p className="mb-2">Loading Google Maps...</p>
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto"></div>
         </div>
       </div>
     );
   }
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="grid grid-cols-1 gap-6">
-          {/* Task Title */}
-          <FormField
-            control={form.control}
-            name="title"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Task Title</FormLabel>
-                <FormControl>
-                  <Input placeholder="Morning Run in Shibuya" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Task Description */}
-          <FormField
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Task Description</FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder="Describe what needs to be done"
-                    rows={3}
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Country and City */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <FormField
-              control={form.control}
-              name="country"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Country</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a country" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {COUNTRIES.map((country) => (
-                        <SelectItem key={country} value={country}>
-                          {country}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="city"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>City</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Tokyo" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          {/* Route */}
-          <div>
-            <FormLabel>Route</FormLabel>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 mt-2">
-              <FormField
-                control={form.control}
-                name="startLocation"
-                render={({ field }) => (
-                  <FormItem>
-                    <div className="flex items-center justify-between">
-                      <FormLabel className="text-xs text-neutral-500">Start Location</FormLabel>
-                      <Button 
-                        type="button" 
-                        size="sm" 
-                        variant="outline" 
-                        onClick={() => {
-                          console.log('Setting location selection mode to: start');
-                          setLocationSelectionMode('start');
-                          
-                          // 地図のステータスを確認
-                          console.log('Map loaded:', mapIsLoaded);
-                          console.log('Map instance exists:', !!mapInstance);
-                          
-                          toast({
-                            title: 'Select Start Location',
-                            description: 'Click on the map to set the start location',
-                          });
-                        }}
-                        className="h-6 text-xs px-2"
+    <div className="container max-w-4xl mx-auto">
+      <Card>
+        <CardContent className="p-6">
+          <h1 className="text-2xl font-bold mb-6">
+            {recreateTaskId ? 'Re-Create Task' : 'Create New Task'}
+          </h1>
+          
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Title Field */}
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Task Title</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter task title" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                {/* Reward Amount Field */}
+                <FormField
+                  control={form.control}
+                  name="rewardAmount"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Reward Amount (SOL)</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          step="0.01" 
+                          min="0.01"
+                          placeholder="0.5" 
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                {/* Country Field */}
+                <FormField
+                  control={form.control}
+                  name="country"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Country</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        value={field.value}
                       >
-                        Pick on Map
-                      </Button>
-                    </div>
-                    <FormControl>
-                      <Input 
-                        placeholder="Shibuya Station" 
-                        {...field} 
-                        onBlur={() => {
-                          field.onBlur();
-                          updateRoute();
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="endLocation"
-                render={({ field }) => (
-                  <FormItem>
-                    <div className="flex items-center justify-between">
-                      <FormLabel className="text-xs text-neutral-500">End Location</FormLabel>
-                      <Button 
-                        type="button" 
-                        size="sm" 
-                        variant="outline" 
-                        onClick={() => {
-                          console.log('Setting location selection mode to: end');
-                          setLocationSelectionMode('end');
-                          
-                          // 地図のステータスを確認
-                          console.log('Map loaded:', mapIsLoaded);
-                          console.log('Map instance exists:', !!mapInstance);
-                          
-                          toast({
-                            title: 'Select End Location',
-                            description: 'Click on the map to set the end location',
-                          });
-                        }}
-                        className="h-6 text-xs px-2"
-                      >
-                        Pick on Map
-                      </Button>
-                    </div>
-                    <FormControl>
-                      <Input 
-                        placeholder="Yoyogi Park" 
-                        {...field} 
-                        onBlur={() => {
-                          field.onBlur();
-                          updateRoute();
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
-
-          {/* Map Preview */}
-          <div>
-            <div className="flex items-center justify-between">
-              <FormLabel>Map Preview</FormLabel>
-              <div className="flex space-x-2">
-                {locationSelectionMode && (
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => setLocationSelectionMode(null)}
-                    className="h-7 text-xs"
-                  >
-                    Cancel Selection
-                  </Button>
-                )}
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="secondary"
-                  onClick={updateRoute}
-                  className="h-7 text-xs"
-                  disabled={!form.getValues('startLocation') || !form.getValues('endLocation')}
-                >
-                  Calculate Route
-                </Button>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select country" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {COUNTRIES.map((country) => (
+                            <SelectItem key={country} value={country}>
+                              {country}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                {/* City Field */}
+                <FormField
+                  control={form.control}
+                  name="city"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>City</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter city" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                {/* Expiry Date Field */}
+                <FormField
+                  control={form.control}
+                  name="expiresAt"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Expiry Date</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="datetime-local" 
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
-            </div>
-            <div className="mt-2">
-              <div id="map-container" className="h-64 rounded-lg bg-neutral-200" />
-              {!mapIsLoaded && (
-                <div className="text-center p-4 text-sm text-neutral-500">
-                  Loading map...
-                </div>
-              )}
-              {locationSelectionMode && (
-                <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-2 mt-2 text-sm rounded">
-                  {locationSelectionMode === 'start' ? 'Click on the map to select the start location' : 'Click on the map to select the end location'}
-                </div>
-              )}
-              {route && (
-                <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-2 mt-2 text-sm rounded">
-                  Route distance: {route.routes[0].legs[0].distance.text} | 
-                  Duration: {route.routes[0].legs[0].duration.text}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Reward and Expiration */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <FormField
-              control={form.control}
-              name="rewardAmount"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Reward (SOL)</FormLabel>
-                  <div className="relative">
+              
+              {/* Description Field */}
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Task Description</FormLabel>
                     <FormControl>
-                      <Input
-                        type="number"
-                        step="0.1"
-                        min="0.1"
-                        placeholder="0.0"
-                        {...field}
-                        className="pr-12"
+                      <Textarea 
+                        placeholder="Enter detailed task description" 
+                        className="h-32"
+                        {...field} 
                       />
                     </FormControl>
-                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                      <span className="text-neutral-500 text-sm">SOL</span>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              {/* Location Selection Section */}
+              <div className="space-y-4">
+                <h2 className="text-lg font-semibold">Route Selection</h2>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  {/* Start Location Field */}
+                  <FormField
+                    control={form.control}
+                    name="startLocation"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Start Location</FormLabel>
+                        <FormControl>
+                          <div>
+                            <Autocomplete
+                              onLoad={onLoadOriginAutocomplete}
+                              onPlaceChanged={onOriginChanged}
+                              options={{
+                                fields: ["formatted_address", "geometry", "name"],
+                              }}
+                            >
+                              <Input
+                                ref={originRef}
+                                placeholder="Enter start location"
+                                {...field}
+                              />
+                            </Autocomplete>
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  {/* End Location Field */}
+                  <FormField
+                    control={form.control}
+                    name="endLocation"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>End Location</FormLabel>
+                        <FormControl>
+                          <div>
+                            <Autocomplete
+                              onLoad={onLoadDestinationAutocomplete}
+                              onPlaceChanged={onDestinationChanged}
+                              options={{
+                                fields: ["formatted_address", "geometry", "name"],
+                              }}
+                            >
+                              <Input
+                                ref={destinationRef}
+                                placeholder="Enter end location"
+                                {...field}
+                              />
+                            </Autocomplete>
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                {/* Route Controls */}
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <Button 
+                    type="button" 
+                    variant="secondary"
+                    onClick={calculateRoute}
+                  >
+                    Calculate Route
+                  </Button>
+                  
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    onClick={clearRoute}
+                  >
+                    Clear Route
+                  </Button>
+                </div>
+                
+                {/* Map Display */}
+                <div className="w-full h-[400px] bg-gray-100 rounded-md relative">
+                  <GoogleMap
+                    mapContainerStyle={mapContainerStyle}
+                    zoom={12}
+                    onLoad={onLoad}
+                    onUnmount={onUnmount}
+                    options={MAPS_CONFIG.options}
+                  >
+                    {directionsResponse && (
+                      <DirectionsRenderer
+                        directions={directionsResponse}
+                        options={{
+                          suppressMarkers: false,
+                          draggable: true,
+                        }}
+                      />
+                    )}
+                  </GoogleMap>
+                </div>
+                
+                {/* Route Info */}
+                {routeData && (
+                  <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-md">
+                    <h3 className="font-medium mb-2">Route Information</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Distance</p>
+                        <p className="font-medium">{routeData.distance}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Walking Duration</p>
+                        <p className="font-medium">{routeData.duration}</p>
+                      </div>
                     </div>
                   </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="expiresAt"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Expiration Date</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="datetime-local"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        </div>
-
-        {/* Submit Buttons */}
-        <div className="flex justify-end space-x-3 pt-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => navigate('/commissioner/dashboard')}
-          >
-            Cancel
-          </Button>
-          <Button 
-            type="submit" 
-            disabled={isLockingFunds || createTaskMutation.isPending}
-          >
-            {isLockingFunds || createTaskMutation.isPending ? (
-              <>
-                <span className="material-icons animate-spin mr-2 text-sm">sync</span>
-                {isLockingFunds ? 'Locking Funds...' : 'Creating Task...'}
-              </>
-            ) : (
-              'Create & Lock Funds'
-            )}
-          </Button>
-        </div>
-      </form>
-    </Form>
+                )}
+              </div>
+              
+              {/* Submit Button */}
+              <div className="flex justify-end space-x-4">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => navigate('/commissioner')}
+                >
+                  Cancel
+                </Button>
+                
+                <Button
+                  type="submit"
+                  disabled={isLockingFunds || createTaskMutation.isPending}
+                >
+                  {isLockingFunds || createTaskMutation.isPending ? (
+                    <>
+                      <span className="animate-spin mr-2">⚙️</span>
+                      {recreateTaskId ? 'Re-Creating Task...' : 'Creating Task...'}
+                    </>
+                  ) : (
+                    <>{recreateTaskId ? 'Re-Create Task' : 'Create Task'}</>
+                  )}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
