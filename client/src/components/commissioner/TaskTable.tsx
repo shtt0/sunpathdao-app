@@ -146,7 +146,6 @@ export default function TaskTable({ onIncreaseReward, userId }: TaskTableProps) 
                 <SelectContent>
                   <SelectItem value="all_statuses">All Statuses</SelectItem>
                   <SelectItem value={TASK_STATUS.AVAILABLE}>Available</SelectItem>
-                  <SelectItem value={TASK_STATUS.IN_PROGRESS}>Available</SelectItem>
                   <SelectItem value={TASK_STATUS.JUDGING}>Judging</SelectItem>
                   <SelectItem value={TASK_STATUS.COMPLETED}>Completed</SelectItem>
                   <SelectItem value={TASK_STATUS.EXPIRED}>Expired</SelectItem>
