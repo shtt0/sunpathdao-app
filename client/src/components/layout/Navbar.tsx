@@ -60,6 +60,15 @@ export default function Navbar() {
                     >
                       Driver View
                     </Link>
+                    <Link 
+                      href="/driver/my-tasks"
+                      className={cn(
+                        "border-transparent text-neutral-500 hover:border-neutral-300 hover:text-neutral-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium",
+                        location === "/driver/my-tasks" && "border-primary text-neutral-900"
+                      )}
+                    >
+                      My Tasks
+                    </Link>
                   </div>
                 </>
               )}
