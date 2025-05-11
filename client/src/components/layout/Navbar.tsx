@@ -43,22 +43,13 @@ export default function Navbar() {
                   {/* View Switch Tabs */}
                   <div className="flex space-x-8">
                     <Link 
-                      href="/commissioner/dashboard"
-                      className={cn(
-                        "border-transparent text-neutral-500 hover:border-neutral-300 hover:text-neutral-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium",
-                        isCommissionerView && "border-primary text-neutral-900"
-                      )}
-                    >
-                      Commissioner View
-                    </Link>
-                    <Link 
                       href="/driver/tasks"
                       className={cn(
                         "border-transparent text-neutral-500 hover:border-neutral-300 hover:text-neutral-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium",
-                        isDriverView && "border-primary text-neutral-900"
+                        isDriverView && location !== "/driver/my-tasks" && "border-primary text-neutral-900"
                       )}
                     >
-                      Driver View
+                      Find Tasks
                     </Link>
                     <Link 
                       href="/driver/my-tasks"
@@ -67,8 +58,21 @@ export default function Navbar() {
                         location === "/driver/my-tasks" && "border-primary text-neutral-900"
                       )}
                     >
-                      My Tasks
+                      Achievement
                     </Link>
+                    <Button
+                      asChild
+                      variant="outline"
+                      size="sm"
+                      className={cn(
+                        "ml-2 border-neutral-300",
+                        isCommissionerView && "bg-primary-light/10 text-primary border-primary"
+                      )}
+                    >
+                      <Link href="/commissioner/dashboard">
+                        Commission Mode
+                      </Link>
+                    </Button>
                   </div>
                 </>
               )}
@@ -103,27 +107,41 @@ export default function Navbar() {
             {isConnected && (
               <>
                 <Link 
-                  href="/commissioner/dashboard"
-                  className={cn(
-                    "block pl-3 pr-4 py-2 border-l-4 text-base font-medium",
-                    isCommissionerView 
-                      ? "bg-primary-light/10 border-primary text-primary" 
-                      : "border-transparent text-neutral-500 hover:bg-neutral-50 hover:border-neutral-300 hover:text-neutral-700"
-                  )}
-                >
-                  Commissioner View
-                </Link>
-                <Link 
                   href="/driver/tasks"
                   className={cn(
                     "block pl-3 pr-4 py-2 border-l-4 text-base font-medium",
-                    isDriverView 
+                    isDriverView && location !== "/driver/my-tasks"
                       ? "bg-primary-light/10 border-primary text-primary" 
                       : "border-transparent text-neutral-500 hover:bg-neutral-50 hover:border-neutral-300 hover:text-neutral-700"
                   )}
                 >
-                  Driver View
+                  Find Tasks
                 </Link>
+                <Link 
+                  href="/driver/my-tasks"
+                  className={cn(
+                    "block pl-3 pr-4 py-2 border-l-4 text-base font-medium",
+                    location === "/driver/my-tasks"
+                      ? "bg-primary-light/10 border-primary text-primary" 
+                      : "border-transparent text-neutral-500 hover:bg-neutral-50 hover:border-neutral-300 hover:text-neutral-700"
+                  )}
+                >
+                  Achievement
+                </Link>
+                <div className="p-3">
+                  <Button
+                    asChild
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-center",
+                      isCommissionerView && "bg-primary-light/10 text-primary border-primary"
+                    )}
+                  >
+                    <Link href="/commissioner/dashboard">
+                      Commission Mode
+                    </Link>
+                  </Button>
+                </div>
                 
                 {isCommissionerView && (
                   <>
@@ -142,22 +160,7 @@ export default function Navbar() {
                   </>
                 )}
                 
-                {isDriverView && (
-                  <>
-                    <Link 
-                      href="/driver/tasks"
-                      className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-neutral-500 hover:bg-neutral-50 hover:border-neutral-300 hover:text-neutral-700"
-                    >
-                      Available Tasks
-                    </Link>
-                    <Link 
-                      href="/driver/my-tasks"
-                      className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-neutral-500 hover:bg-neutral-50 hover:border-neutral-300 hover:text-neutral-700"
-                    >
-                      My Tasks
-                    </Link>
-                  </>
-                )}
+
               </>
             )}
           </div>
