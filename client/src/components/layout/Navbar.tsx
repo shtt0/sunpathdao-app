@@ -13,9 +13,9 @@ export default function Navbar() {
   // Check if wallet is connected
   const isConnected = walletStatus === 'connected';
   
-  // Determine current view (commissioner or runner)
+  // Determine current view (commissioner or driver)
   const isCommissionerView = location.includes('/commissioner');
-  const isRunnerView = location.includes('/runner');
+  const isDriverView = location.includes('/driver');
   
   // Toggle mobile menu
   const toggleMobileMenu = () => {
@@ -30,9 +30,9 @@ export default function Navbar() {
             <div className="flex-shrink-0 flex items-center">
               <Link href="/" className="flex items-center">
                 <div className="h-8 w-8 rounded-full bg-primary-light flex items-center justify-center">
-                  <span className="material-icons text-white text-sm">directions_run</span>
+                  <span className="material-icons text-white text-sm">directions_car</span>
                 </div>
-                <span className="ml-2 text-xl font-display font-bold text-neutral-900">RunRoute</span>
+                <span className="ml-2 text-xl font-display font-bold text-neutral-900">SUNPATH DAO</span>
               </Link>
             </div>
             
@@ -52,13 +52,13 @@ export default function Navbar() {
                       Commissioner View
                     </Link>
                     <Link 
-                      href="/runner/tasks"
+                      href="/driver/tasks"
                       className={cn(
                         "border-transparent text-neutral-500 hover:border-neutral-300 hover:text-neutral-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium",
-                        isRunnerView && "border-primary text-neutral-900"
+                        isDriverView && "border-primary text-neutral-900"
                       )}
                     >
-                      Runner View
+                      Driver View
                     </Link>
                   </div>
                 </>
@@ -105,15 +105,15 @@ export default function Navbar() {
                   Commissioner View
                 </Link>
                 <Link 
-                  href="/runner/tasks"
+                  href="/driver/tasks"
                   className={cn(
                     "block pl-3 pr-4 py-2 border-l-4 text-base font-medium",
-                    isRunnerView 
+                    isDriverView 
                       ? "bg-primary-light/10 border-primary text-primary" 
                       : "border-transparent text-neutral-500 hover:bg-neutral-50 hover:border-neutral-300 hover:text-neutral-700"
                   )}
                 >
-                  Runner View
+                  Driver View
                 </Link>
                 
                 {isCommissionerView && (
@@ -133,16 +133,16 @@ export default function Navbar() {
                   </>
                 )}
                 
-                {isRunnerView && (
+                {isDriverView && (
                   <>
                     <Link 
-                      href="/runner/tasks"
+                      href="/driver/tasks"
                       className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-neutral-500 hover:bg-neutral-50 hover:border-neutral-300 hover:text-neutral-700"
                     >
                       Available Tasks
                     </Link>
                     <Link 
-                      href="/runner/my-tasks"
+                      href="/driver/my-tasks"
                       className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-neutral-500 hover:bg-neutral-50 hover:border-neutral-300 hover:text-neutral-700"
                     >
                       My Tasks
