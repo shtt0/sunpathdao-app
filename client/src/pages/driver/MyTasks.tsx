@@ -87,9 +87,9 @@ export default function MyTasks() {
     return (
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 sm:px-0">
-          <h1 className="text-2xl font-display font-bold text-neutral-900">My Tasks</h1>
+          <h1 className="text-2xl font-display font-bold text-neutral-900">My Achievement</h1>
           <p className="mt-1 text-sm text-neutral-600">
-            View your task history and payment status
+            View your earned rewards and task history
           </p>
         </div>
         
@@ -99,7 +99,7 @@ export default function MyTasks() {
           </div>
           <h2 className="mt-4 text-xl font-semibold text-neutral-900">Wallet Not Connected</h2>
           <p className="mt-2 text-neutral-600 text-center max-w-md">
-            Please connect your Phantom wallet to view your task history.
+            Please connect your Phantom wallet to view your achievements.
           </p>
         </div>
       </div>
@@ -111,16 +111,16 @@ export default function MyTasks() {
     return (
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 sm:px-0">
-          <h1 className="text-2xl font-display font-bold text-neutral-900">My Tasks</h1>
+          <h1 className="text-2xl font-display font-bold text-neutral-900">My Achievement</h1>
           <p className="mt-1 text-sm text-neutral-600">
-            View your task history and payment status
+            View your earned rewards and task history
           </p>
         </div>
         
         <div className="mt-12 flex justify-center">
           <div className="flex items-center">
             <span className="material-icons animate-spin mr-2">sync</span>
-            Loading your task history...
+            Loading your achievements...
           </div>
         </div>
       </div>
@@ -162,7 +162,7 @@ export default function MyTasks() {
                     <p className="text-2xl font-display font-bold text-accent">
                       {formatSOL(
                         submissions
-                          .filter(s => s.status === 'accepted')
+                          .filter((s: any) => s.status === 'accepted')
                           .reduce((sum: number, s: any) => sum + parseFloat(s.task.rewardAmount), 0)
                       )}
                     </p>
@@ -182,7 +182,7 @@ export default function MyTasks() {
                     <p className="text-2xl font-display font-bold text-neutral-700">
                       {formatSOL(
                         submissions
-                          .filter(s => s.status === 'pending')
+                          .filter((s: any) => s.status === 'pending')
                           .reduce((sum: number, s: any) => sum + parseFloat(s.task.rewardAmount), 0)
                       )}
                     </p>
