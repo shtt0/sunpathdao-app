@@ -14,10 +14,10 @@ import CommissionerDashboard from "@/pages/commissioner/Dashboard";
 import CreateTask from "@/pages/commissioner/CreateTask";
 import ReviewSubmission from "@/pages/commissioner/ReviewSubmission";
 
-// Runner pages
-import AvailableTasks from "@/pages/runner/AvailableTasks";
-import TaskDetail from "@/pages/runner/TaskDetail";
-import MyTasks from "@/pages/runner/MyTasks";
+// Driver pages
+import AvailableTasks from "@/pages/driver/AvailableTasks";
+import TaskDetail from "@/pages/driver/TaskDetail";
+import MyTasks from "@/pages/driver/MyTasks";
 
 function Router() {
   return (
@@ -33,10 +33,10 @@ function Router() {
           <Route path="/commissioner/create-task" component={CreateTask} />
           <Route path="/commissioner/review/:id" component={ReviewSubmission} />
           
-          {/* Runner routes */}
-          <Route path="/runner/tasks" component={AvailableTasks} />
-          <Route path="/runner/tasks/:id" component={TaskDetail} />
-          <Route path="/runner/my-tasks" component={MyTasks} />
+          {/* Driver routes */}
+          <Route path="/driver/tasks" component={AvailableTasks} />
+          <Route path="/driver/tasks/:id" component={TaskDetail} />
+          <Route path="/driver/my-tasks" component={MyTasks} />
           
           {/* Fallback to 404 */}
           <Route component={NotFound} />
