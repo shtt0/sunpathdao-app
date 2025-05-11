@@ -98,3 +98,36 @@ export async function blobToBase64(blob: Blob): Promise<string> {
     reader.readAsDataURL(blob);
   });
 }
+
+// Generate a static map URL for a route between two locations
+export function generateStaticMapUrl(
+  startLocation: string,
+  endLocation: string,
+  width: number = 800,
+  height: number = 400
+): string {
+  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+  const encodedStart = encodeURIComponent(startLocation);
+  const encodedEnd = encodeURIComponent(endLocation);
+  
+  // Basic URL with start and end markers
+  let url = `https://maps.googleapis.com/maps/api/staticmap?`;
+  
+  // Set size
+  url += `size=${width}x${height}`;
+  
+  // Add markers
+  url += `&markers=color:green|label:S|${encodedStart}`;
+  url += `&markers=color:red|label:E|${encodedEnd}`;
+  
+  // Add path
+  url += `&path=color:0x0000FF88|weight:5|${encodedStart}|${encodedEnd}`;
+  
+  // Add zoom and map type
+  url += `&zoom=13&maptype=roadmap`;
+  
+  // Add API key
+  url += `&key=${apiKey}`;
+  
+  return url;
+}

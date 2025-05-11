@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'wouter';
 import { Button } from '@/components/ui/button';
 import TaskStatusBadge from '@/components/TaskStatusBadge';
-import { formatSOL } from '@/lib/utils';
+import { formatSOL, generateStaticMapUrl } from '@/lib/utils';
 import { Task } from '@shared/schema';
 
 interface TaskCardProps {
@@ -10,27 +10,25 @@ interface TaskCardProps {
 }
 
 export default function TaskCard({ task }: TaskCardProps) {
-  // Generate a random map placeholder image using Unsplash
-  const mapImageId = React.useMemo(() => {
-    const mapIds = [
-      'oGv9xIftcmM',
-      'LY1eyQMFeyo',
-      'wYbJeOUayU4',
-      'JUqQEO-72LE',
-      '5e861c8ad8c5f72e1eca15a6a36812d5',
-      'a074ee4d8aeedc16a9e0e0a2e3d592cc',
-    ];
-    return mapIds[Math.floor(Math.random() * mapIds.length)];
-  }, [task.id]);
+  // Generate static map URL for the route
+  const mapImageUrl = React.useMemo(() => {
+    return generateStaticMapUrl(task.startLocation, task.endLocation, 800, 400);
+  }, [task.startLocation, task.endLocation]);
 
   return (
     <div className="bg-white overflow-hidden shadow rounded-lg border border-neutral-200 hover:shadow-md transition-shadow">
       <div 
-        className="h-40 bg-cover bg-center" 
+        className="h-40 bg-cover bg-center relative" 
         style={{ 
-          backgroundImage: `url(https://source.unsplash.com/${mapImageId}/800x400)` 
+          backgroundImage: `url(${mapImageUrl})` 
         }}
-      />
+      >
+        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20">
+          <div className="text-white font-medium px-3 py-1 rounded shadow text-center">
+            <div className="text-xs">Route Map</div>
+          </div>
+        </div>
+      </div>
       <div className="px-4 py-4">
         <div className="flex justify-between items-start">
           <h3 className="text-lg font-medium text-neutral-900 truncate">{task.title}</h3>

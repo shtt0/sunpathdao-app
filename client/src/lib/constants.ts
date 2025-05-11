@@ -71,4 +71,16 @@ export const MAPS_CONFIG = {
     fullscreenControl: false,
     mapTypeControl: false,
   },
+  staticMap: {
+    width: 800,
+    height: 400,
+    zoom: 13,
+    mapType: 'roadmap',
+    markers: {
+      color: 'red',
+      label: 'S',
+    },
+    pathColor: '0x0000FF88', // Blue with some transparency
+    pathWeight: 5,
+  }
 };
