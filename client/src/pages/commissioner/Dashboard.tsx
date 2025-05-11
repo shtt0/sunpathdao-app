@@ -50,6 +50,38 @@ export default function Dashboard() {
     enabled: !!walletAddress && walletStatus === 'connected',
   });
   
+  // Fetch deposit balance from blockchain
+  useEffect(() => {
+    const fetchBalance = async () => {
+      if (!walletAddress || walletStatus !== 'connected') return;
+      
+      try {
+        setIsLoadingBalance(true);
+        // In a real app, this would fetch the balance from a deposit escrow contract
+        // For demo purposes, we're simulating a deposit balance
+        
+        // Get the wallet's SOL balance
+        const pubkey = new PublicKey(walletAddress);
+        const balance = await getSolBalance(pubkey);
+        
+        // For demo purposes only: simulating a deposit balance (3 SOL max)
+        // In a real app, this would query an escrow contract
+        setDepositBalance(Math.min(balance * 0.1, 3));
+      } catch (error) {
+        console.error('Error fetching deposit balance:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load account balance',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsLoadingBalance(false);
+      }
+    };
+    
+    fetchBalance();
+  }, [walletAddress, walletStatus, toast]);
+  
   // Handle opening increase reward dialog
   const handleIncreaseReward = (taskId: number) => {
     setSelectedTaskId(taskId);
@@ -91,6 +123,9 @@ export default function Dashboard() {
       });
     }
   };
+  
+  // Extract user ID from user data
+  const userId = userData?.user?.id;
   
   // If wallet is not connected, show connect wallet message
   if (walletStatus !== 'connected') {
@@ -136,41 +171,6 @@ export default function Dashboard() {
       </div>
     );
   }
-  
-  // Extract user ID from user data
-  const userId = userData?.user?.id;
-  
-  // Fetch deposit balance from blockchain
-  useEffect(() => {
-    const fetchBalance = async () => {
-      if (!walletAddress || walletStatus !== 'connected') return;
-      
-      try {
-        setIsLoadingBalance(true);
-        // In a real app, this would fetch the balance from a deposit escrow contract
-        // For demo purposes, we're simulating a deposit balance
-        
-        // Get the wallet's SOL balance
-        const pubkey = new PublicKey(walletAddress);
-        const balance = await getSolBalance(pubkey);
-        
-        // For demo purposes only: simulating a deposit balance (3 SOL max)
-        // In a real app, this would query an escrow contract
-        setDepositBalance(Math.min(balance * 0.1, 3));
-      } catch (error) {
-        console.error('Error fetching deposit balance:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to load account balance',
-          variant: 'destructive',
-        });
-      } finally {
-        setIsLoadingBalance(false);
-      }
-    };
-    
-    fetchBalance();
-  }, [walletAddress, walletStatus, toast]);
   
   // Handle deposit button click
   const handleDeposit = async () => {
