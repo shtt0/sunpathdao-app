@@ -46,7 +46,7 @@ export default function Navbar() {
                       href="/driver/tasks"
                       className={cn(
                         "border-transparent text-neutral-500 hover:border-neutral-300 hover:text-neutral-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium",
-                        isDriverView && location !== "/driver/my-tasks" && "border-primary text-neutral-900"
+                        isDriverView && location !== "/driver/achievement" && location.includes("/driver/tasks") && "border-primary text-neutral-900"
                       )}
                     >
                       Find Tasks
@@ -110,7 +110,7 @@ export default function Navbar() {
                   href="/driver/tasks"
                   className={cn(
                     "block pl-3 pr-4 py-2 border-l-4 text-base font-medium",
-                    isDriverView && location !== "/driver/my-tasks"
+                    isDriverView && location !== "/driver/achievement" && location.includes("/driver/tasks")
                       ? "bg-primary-light/10 border-primary text-primary" 
                       : "border-transparent text-neutral-500 hover:bg-neutral-50 hover:border-neutral-300 hover:text-neutral-700"
                   )}
