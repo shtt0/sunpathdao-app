@@ -28,7 +28,7 @@ export default function Footer() {
           </div>
           <div className="mt-8 md:mt-0">
             <p className="text-center text-sm text-neutral-500 md:text-right">
-              &copy; {new Date().getFullYear()} RunRoute. All rights reserved.
+              &copy; {new Date().getFullYear()} SUNPATH DAO. All rights reserved.
             </p>
           </div>
         </div>

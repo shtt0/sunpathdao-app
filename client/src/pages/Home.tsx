@@ -13,11 +13,11 @@ export default function Home() {
       <div className="max-w-7xl mx-auto">
         <div className="text-center">
           <h1 className="text-4xl font-display font-bold text-neutral-900 sm:text-5xl md:text-6xl">
-            <span className="block">Run Routes,</span>
+            <span className="block">Drive Routes,</span>
             <span className="block text-primary">Earn Crypto</span>
           </h1>
           <p className="mt-4 max-w-lg mx-auto text-base text-neutral-600 sm:text-lg md:mt-8 md:text-xl">
-            The world's first Solana blockchain-based platform connecting commissioners and runners for location-based tasks.
+            SUNPATH DAO: The world's first Solana blockchain-based platform connecting commissioners and drivers for location-based tasks.
           </p>
           <div className="mt-8 sm:mt-10">
             {isConnected ? (
@@ -27,9 +27,9 @@ export default function Home() {
                     Commission Tasks
                   </Button>
                 </Link>
-                <Link href="/runner/tasks">
+                <Link href="/driver/tasks">
                   <Button variant="outline" className="px-8 py-3 text-base">
-                    Find Tasks to Run
+                    Find Tasks to Drive
                   </Button>
                 </Link>
               </div>
@@ -47,7 +47,7 @@ export default function Home() {
       <div className="max-w-7xl mx-auto mt-20">
         <div className="text-center">
           <h2 className="text-3xl font-display font-bold text-neutral-900">
-            How RunRoute Works
+            How SUNPATH DAO Works
           </h2>
           <p className="mt-4 max-w-2xl mx-auto text-neutral-600">
             A simple process to commission or complete location-based tasks, verified by video, and paid in Solana.
@@ -80,12 +80,12 @@ export default function Home() {
             </ul>
           </div>
 
-          {/* For Runners */}
+          {/* For Drivers */}
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="flex items-center justify-center h-12 w-12 rounded-md bg-accent text-white mb-4">
-              <span className="material-icons">directions_run</span>
+              <span className="material-icons">directions_car</span>
             </div>
-            <h3 className="text-xl font-display font-bold mb-2">Complete Routes</h3>
+            <h3 className="text-xl font-display font-bold mb-2">Drive Routes</h3>
             <p className="text-neutral-600">
               Browse available tasks, record videos while completing routes, and earn SOL rewards.
             </p>
