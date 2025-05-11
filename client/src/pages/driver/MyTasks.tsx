@@ -177,7 +177,7 @@ export default function MyTasks() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all_statuses">All Statuses</SelectItem>
-                    <SelectItem value="pending">Pending Review</SelectItem>
+                    <SelectItem value="pending">Judging</SelectItem>
                     <SelectItem value="accepted">Accepted</SelectItem>
                     <SelectItem value="rejected">Rejected</SelectItem>
                   </SelectContent>
