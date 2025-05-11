@@ -134,13 +134,69 @@ export default function MyTasks() {
   return (
     <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
       <div className="px-4 sm:px-0">
-        <h1 className="text-2xl font-display font-bold text-neutral-900">My Tasks</h1>
+        <h1 className="text-2xl font-display font-bold text-neutral-900">My Achievement</h1>
         <p className="mt-1 text-sm text-neutral-600">
-          View your task history and payment status
+          View your earned rewards and task history
         </p>
       </div>
 
       <div className="mt-6">
+        {/* Rewards Section */}
+        <div className="mb-8">
+          <div className="flex items-center mb-4">
+            <div className="bg-primary-light/10 rounded-lg p-2">
+              <span className="material-icons text-primary-dark">monetization_on</span>
+            </div>
+            <div className="ml-3">
+              <h2 className="text-lg font-display font-medium text-neutral-900">Rewards</h2>
+              <p className="text-sm text-neutral-500">Track your earnings from completed tasks</p>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card className="bg-white">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-neutral-500">Total Rewards</p>
+                    <p className="text-2xl font-display font-bold text-accent">
+                      {formatSOL(
+                        submissions
+                          .filter(s => s.status === 'accepted')
+                          .reduce((sum: number, s: any) => sum + parseFloat(s.task.rewardAmount), 0)
+                      )}
+                    </p>
+                  </div>
+                  <div className="bg-success/10 rounded-full p-3">
+                    <span className="material-icons text-success">check_circle</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-white">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-neutral-500">Pending Rewards</p>
+                    <p className="text-2xl font-display font-bold text-neutral-700">
+                      {formatSOL(
+                        submissions
+                          .filter(s => s.status === 'pending')
+                          .reduce((sum: number, s: any) => sum + parseFloat(s.task.rewardAmount), 0)
+                      )}
+                    </p>
+                  </div>
+                  <div className="bg-warning/10 rounded-full p-3">
+                    <span className="material-icons text-warning">pending</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+        
+        {/* Task History Section */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between">
           <div className="flex-1 min-w-0">
             <div className="flex items-center">

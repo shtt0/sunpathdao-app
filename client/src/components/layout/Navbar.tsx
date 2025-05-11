@@ -52,10 +52,10 @@ export default function Navbar() {
                       Find Tasks
                     </Link>
                     <Link 
-                      href="/driver/my-tasks"
+                      href="/driver/achievement"
                       className={cn(
                         "border-transparent text-neutral-500 hover:border-neutral-300 hover:text-neutral-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium",
-                        location === "/driver/my-tasks" && "border-primary text-neutral-900"
+                        location === "/driver/achievement" && "border-primary text-neutral-900"
                       )}
                     >
                       Achievement
@@ -118,10 +118,10 @@ export default function Navbar() {
                   Find Tasks
                 </Link>
                 <Link 
-                  href="/driver/my-tasks"
+                  href="/driver/achievement"
                   className={cn(
                     "block pl-3 pr-4 py-2 border-l-4 text-base font-medium",
-                    location === "/driver/my-tasks"
+                    location === "/driver/achievement"
                       ? "bg-primary-light/10 border-primary text-primary" 
                       : "border-transparent text-neutral-500 hover:bg-neutral-50 hover:border-neutral-300 hover:text-neutral-700"
                   )}

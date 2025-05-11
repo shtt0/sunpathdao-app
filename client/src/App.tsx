@@ -36,7 +36,7 @@ function Router() {
           {/* Driver routes */}
           <Route path="/driver/tasks" component={AvailableTasks} />
           <Route path="/driver/tasks/:id" component={TaskDetail} />
-          <Route path="/driver/my-tasks" component={MyTasks} />
+          <Route path="/driver/achievement" component={MyTasks} />
           
           {/* Fallback to 404 */}
           <Route component={NotFound} />
