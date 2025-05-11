@@ -13,16 +13,24 @@ interface TaskCardProps {
 export default function TaskCard({ task }: TaskCardProps) {
   return (
     <div className="bg-white overflow-hidden shadow rounded-lg border border-neutral-200 hover:shadow-md transition-shadow">
-      <div className="relative">
-        {/* Interactive map component */}
-        <SimpleRouteMap 
-          startLocation={task.startLocation}
-          endLocation={task.endLocation}
-          height={160}
-        />
+      <div 
+        className="h-40 bg-neutral-100 relative"
+      >
+        {/* Simple route representation */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="material-icons text-green-500">place</span>
+            <span className="text-sm font-medium">{task.startLocation}</span>
+          </div>
+          <div className="w-px h-10 bg-blue-400 mx-auto"></div>
+          <div className="flex items-center gap-2 mt-2">
+            <span className="material-icons text-red-500">place</span>
+            <span className="text-sm font-medium">{task.endLocation}</span>
+          </div>
+        </div>
         
         {/* Overlay with "Route Map" label */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div className="absolute top-2 left-1/2 transform -translate-x-1/2 pointer-events-none">
           <div className="bg-black bg-opacity-20 px-3 py-1 rounded shadow text-center">
             <div className="text-white text-xs font-medium">Route Map</div>
           </div>

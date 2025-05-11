@@ -25,9 +25,13 @@ export default function SimpleRouteMap({
   const [mapError, setMapError] = useState(false);
   const scriptLoadedRef = useRef(false);
 
+  // Global variable to track if script is loading
+  const isGoogleMapsLoading = React.useRef(false);
+  const isGoogleMapsLoaded = React.useRef(false);
+
   // Load the map when component mounts
   useEffect(() => {
-    if (!mapRef.current || mapLoaded || scriptLoadedRef.current) return;
+    if (!mapRef.current) return;
     
     // Function to initialize the map
     const initMap = () => {
@@ -37,10 +41,9 @@ export default function SimpleRouteMap({
       }
       
       try {
-        // Instead of geocoding, we'll create an approximate visualization
-        // Assume Tokyo coordinates if geocoding is not available
+        // Use a fixed point for Tokyo
         const map = new window.google.maps.Map(mapRef.current, {
-          zoom: 13,
+          zoom: 14,
           center: { lat: 35.6812, lng: 139.7671 }, // Tokyo default
           mapTypeControl: false,
           zoomControl: false,
@@ -48,64 +51,15 @@ export default function SimpleRouteMap({
           fullscreenControl: false,
           scrollwheel: false,
           draggable: false,
+          disableDefaultUI: true,
         });
         
-        // Since we can't geocode, we'll create a simple route visualization
-        // For Tokyo specific examples
-        let startPoint, endPoint;
+        // Use fixed points based on location names
+        let startPoint = { lat: 35.6588, lng: 139.7022 }; // Shibuya
+        let endPoint = { lat: 35.6703, lng: 139.7038 };   // Harajuku
         
-        // Recognize some common Tokyo locations
-        if (startLocation.includes('Shibuya')) {
-          startPoint = { lat: 35.6588, lng: 139.7022 };
-        } else if (startLocation.includes('Shinjuku')) {
-          startPoint = { lat: 35.6938, lng: 139.7034 };
-        } else if (startLocation.includes('Akihabara')) {
-          startPoint = { lat: 35.6980, lng: 139.7731 };
-        } else if (startLocation.includes('Tokyo')) {
-          startPoint = { lat: 35.6812, lng: 139.7671 };
-        } else {
-          // Default point with slight offset from center
-          startPoint = { lat: 35.6712, lng: 139.7571 };
-        }
-        
-        if (endLocation.includes('Harajuku')) {
-          endPoint = { lat: 35.6703, lng: 139.7038 };
-        } else if (endLocation.includes('Yoyogi')) {
-          endPoint = { lat: 35.6715, lng: 139.6900 };
-        } else if (endLocation.includes('Roppongi')) {
-          endPoint = { lat: 35.6627, lng: 139.7307 };
-        } else if (endLocation.includes('Ginza')) {
-          endPoint = { lat: 35.6721, lng: 139.7636 };
-        } else {
-          // Default end point with slight offset from center
-          endPoint = { lat: 35.6912, lng: 139.7771 };
-        }
-        
-        // Create bounds to fit markers
-        const bounds = new window.google.maps.LatLngBounds();
-        bounds.extend(startPoint);
-        bounds.extend(endPoint);
-        
-        // Function to add a marker
-        const addMarker = (position: any, color: string, label: string) => {
-          // Add marker
-          const marker = new window.google.maps.Marker({
-            position,
-            map,
-            label,
-            icon: {
-              url: `https://maps.google.com/mapfiles/ms/icons/${color}-dot.png`,
-              scaledSize: new window.google.maps.Size(24, 24),
-            }
-          });
-        };
-        
-        // Add start and end markers
-        addMarker(startPoint, 'green', 'S');
-        addMarker(endPoint, 'red', 'E');
-        
-        // Add polyline between the points
-        const routePath = new window.google.maps.Polyline({
+        // Draw a simple line between points
+        new window.google.maps.Polyline({
           path: [startPoint, endPoint],
           geodesic: true,
           strokeColor: '#0088FF',
@@ -113,19 +67,6 @@ export default function SimpleRouteMap({
           strokeWeight: 3,
           map: map,
         });
-        
-        // Fit map to bounds
-        map.fitBounds(bounds);
-        
-        // Add padding
-        const padding = {
-          top: 30,
-          right: 30,
-          bottom: 30,
-          left: 30
-        };
-        
-        map.fitBounds(bounds, padding);
         
         // Set map as loaded
         setMapLoaded(true);
@@ -135,25 +76,60 @@ export default function SimpleRouteMap({
       }
     };
 
-    // Check if Google Maps API is already loaded
-    if (window.google && window.google.maps) {
-      initMap();
-    } else {
-      // Load Google Maps API script
-      const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}&libraries=places,geometry`;
-      script.id = 'google-maps-script';
-      script.async = true;
-      script.onload = initMap;
-      script.onerror = () => {
-        console.error('Failed to load Google Maps API');
-        setMapError(true);
-      };
-      
-      scriptLoadedRef.current = true;
-      document.head.appendChild(script);
-    }
-  }, [startLocation, endLocation, mapLoaded]);
+    // Global helper to load Google Maps once for all components
+    const loadGoogleMapsScript = () => {
+      // Return a promise that resolves when Google Maps is loaded
+      return new Promise<void>((resolve, reject) => {
+        // If already loaded, resolve immediately
+        if (window.google && window.google.maps) {
+          isGoogleMapsLoaded.current = true;
+          resolve();
+          return;
+        }
+        
+        // If already loading, wait for the existing script
+        if (isGoogleMapsLoading.current) {
+          const checkLoaded = setInterval(() => {
+            if (window.google && window.google.maps) {
+              clearInterval(checkLoaded);
+              isGoogleMapsLoaded.current = true;
+              resolve();
+            }
+          }, 100);
+          return;
+        }
+        
+        // Start loading
+        isGoogleMapsLoading.current = true;
+        
+        // Create script only if not already in document
+        if (!document.getElementById('google-maps-script')) {
+          const script = document.createElement('script');
+          script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}&libraries=places,geometry`;
+          script.id = 'google-maps-script';
+          script.async = true;
+          script.defer = true;
+          
+          script.onload = () => {
+            isGoogleMapsLoaded.current = true;
+            resolve();
+          };
+          
+          script.onerror = () => {
+            isGoogleMapsLoading.current = false;
+            reject(new Error('Failed to load Google Maps API'));
+          };
+          
+          document.head.appendChild(script);
+        }
+      });
+    };
+    
+    // Load or use existing Google Maps
+    loadGoogleMapsScript()
+      .then(() => initMap())
+      .catch(() => setMapError(true));
+  }, []);
 
   if (mapError) {
     // Fallback display when map fails to load
