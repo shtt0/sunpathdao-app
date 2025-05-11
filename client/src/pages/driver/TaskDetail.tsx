@@ -370,18 +370,7 @@ export default function TaskDetail() {
                         <dt className="font-medium text-neutral-500">Route</dt>
                         <dd className="text-neutral-900">{task.startLocation} → {task.endLocation}</dd>
                       </div>
-                      <div className="mt-1 flex justify-between">
-                        <dt className="font-medium text-neutral-500">Distance</dt>
-                        <dd className="text-neutral-900">
-                          {task.routeData?.distance?.text || 'Not available'}
-                        </dd>
-                      </div>
-                      <div className="mt-1 flex justify-between">
-                        <dt className="font-medium text-neutral-500">Estimated Time</dt>
-                        <dd className="text-neutral-900">
-                          {task.routeData?.duration?.text || 'Not available'}
-                        </dd>
-                      </div>
+
                     </dl>
                   </div>
                   
@@ -415,7 +404,6 @@ export default function TaskDetail() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-neutral-500">Ready to complete this task?</p>
-                      <p className="text-xs text-neutral-500 mt-1">You will need to record a 15-second video while completing the route</p>
                     </div>
                     <Button
                       onClick={handleStartRecording}
