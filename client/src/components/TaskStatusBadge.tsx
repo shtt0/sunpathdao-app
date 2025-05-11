@@ -18,20 +18,35 @@ export default function TaskStatusBadge({ status, className }: TaskStatusBadgePr
     | 'info'
     | 'neutral' = 'neutral';
   
-  let label = status.replace('_', ' ');
-  
-  // Capitalize the first letter of each word
-  label = label
-    .split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
+  // Custom label mapping
+  let label;
+  switch (status) {
+    case 'available':
+      label = 'Available';
+      break;
+    case 'in_progress':
+      label = 'Available';  // Both available and in_progress show as "Available"
+      break;
+    case 'judging':
+      label = 'Judging';
+      break;
+    default:
+      // Default formatting for other statuses
+      label = status.replace('_', ' ');
+      
+      // Capitalize the first letter of each word
+      label = label
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+  }
   
   switch (status) {
     case 'available':
       variant = 'success';
       break;
     case 'in_progress':
-      variant = 'info';
+      variant = 'success';  // Same styling as available
       break;
     case 'judging':
       variant = 'warning';
