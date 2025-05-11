@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { API_ROUTES, COUNTRIES, ITEMS_PER_PAGE, SORT_OPTIONS } from '@/lib/constants';
+import { API_ROUTES, COUNTRIES, ITEMS_PER_PAGE, SORT_OPTIONS, TASK_STATUS } from '@/lib/constants';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
@@ -26,16 +26,19 @@ export default function TaskGrid() {
   const [page, setPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [countryFilter, setCountryFilter] = useState("all_countries");
+  const [statusFilter, setStatusFilter] = useState("available"); // デフォルトは利用可能なタスク
   const [sortBy, setSortBy] = useState("newest");
 
   // Fetch tasks from the API
   const { data, isLoading, error } = useQuery({
-    queryKey: [API_ROUTES.TASKS, 'available', countryFilter, sortBy, page, searchQuery],
+    queryKey: [API_ROUTES.TASKS, statusFilter, countryFilter, sortBy, page, searchQuery],
     queryFn: async () => {
       const queryParams = new URLSearchParams();
       
-      // Always filter for available tasks only
-      queryParams.append('status', 'available');
+      // ステータスフィルターの適用
+      if (statusFilter && statusFilter !== 'all_statuses') {
+        queryParams.append('status', statusFilter);
+      }
       
       if (countryFilter && countryFilter !== 'all_countries') {
         queryParams.append('country', countryFilter);
@@ -70,6 +73,11 @@ export default function TaskGrid() {
   const handleCountryFilterChange = (value: string) => {
     setCountryFilter(value);
     setPage(1); // Reset to first page when filter changes
+  };
+
+  const handleStatusFilterChange = (value: string) => {
+    setStatusFilter(value);
+    setPage(1); // Reset to first page when status filter changes
   };
 
   const handleSortByChange = (value: string) => {
@@ -132,7 +140,23 @@ export default function TaskGrid() {
               </form>
             </div>
             
-            <div className="w-full md:w-48">
+            <div className="w-full md:w-40">
+              <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all_statuses">All Statuses</SelectItem>
+                  <SelectItem value={TASK_STATUS.AVAILABLE}>Available</SelectItem>
+                  <SelectItem value={TASK_STATUS.IN_PROGRESS}>In Progress</SelectItem>
+                  <SelectItem value={TASK_STATUS.JUDGING}>Judging</SelectItem>
+                  <SelectItem value={TASK_STATUS.COMPLETED}>Completed</SelectItem>
+                  <SelectItem value={TASK_STATUS.EXPIRED}>Expired</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="w-full md:w-40">
               <Select value={countryFilter} onValueChange={handleCountryFilterChange}>
                 <SelectTrigger>
                   <SelectValue placeholder="All Countries" />
@@ -146,7 +170,7 @@ export default function TaskGrid() {
               </Select>
             </div>
             
-            <div className="w-full md:w-48">
+            <div className="w-full md:w-40">
               <Select value={sortBy} onValueChange={handleSortByChange}>
                 <SelectTrigger>
                   <SelectValue placeholder="Sort by" />
