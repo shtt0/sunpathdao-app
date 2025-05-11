@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'wouter';
-import { API_ROUTES, ITEMS_PER_PAGE } from '@/lib/constants';
+import { API_ROUTES, ITEMS_PER_PAGE, TASK_STATUS } from '@/lib/constants';
 import { formatSOL, formatDate, calculateTimeLeft } from '@/lib/utils';
 import TaskStatusBadge from '@/components/TaskStatusBadge';
 import { Button } from '@/components/ui/button';
@@ -145,11 +145,11 @@ export default function TaskTable({ onIncreaseReward, userId }: TaskTableProps) 
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all_statuses">All Statuses</SelectItem>
-                  <SelectItem value="available">Available</SelectItem>
-                  <SelectItem value="in_progress">In Progress</SelectItem>
-                  <SelectItem value="judging">Judge Pending</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="expired">Expired</SelectItem>
+                  <SelectItem value={TASK_STATUS.AVAILABLE}>Available</SelectItem>
+                  <SelectItem value={TASK_STATUS.IN_PROGRESS}>In Progress</SelectItem>
+                  <SelectItem value={TASK_STATUS.JUDGING}>Judge Pending</SelectItem>
+                  <SelectItem value={TASK_STATUS.COMPLETED}>Completed</SelectItem>
+                  <SelectItem value={TASK_STATUS.EXPIRED}>Expired</SelectItem>
                 </SelectContent>
               </Select>
             </div>
