@@ -427,14 +427,57 @@ export default function CreateTaskForm({ recreateTaskId }: CreateTaskFormProps) 
                   control={form.control}
                   name="expiresAt"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="flex flex-col">
                       <FormLabel>Expiry Date</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="datetime-local" 
-                          {...field} 
-                        />
-                      </FormControl>
+                      <div className="flex flex-col space-y-2">
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant="outline"
+                                className={cn(
+                                  "pl-3 text-left font-normal",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                              >
+                                {field.value ? (
+                                  format(field.value, "PPP")
+                                ) : (
+                                  <span>Pick a date</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={field.onChange}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        
+                        {/* Time selector */}
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="time"
+                            value={field.value ? format(field.value, "HH:mm") : ""}
+                            onChange={(e) => {
+                              const timeValue = e.target.value;
+                              if (timeValue && field.value) {
+                                const [hours, minutes] = timeValue.split(':').map(Number);
+                                const newDate = new Date(field.value);
+                                newDate.setHours(hours);
+                                newDate.setMinutes(minutes);
+                                field.onChange(newDate);
+                              }
+                            }}
+                            className="w-full"
+                          />
+                        </div>
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
