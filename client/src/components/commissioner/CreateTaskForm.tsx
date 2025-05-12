@@ -8,6 +8,8 @@ import { API_ROUTES, COUNTRIES, MAPS_CONFIG } from '@/lib/constants';
 import { useWallet } from '@/contexts/WalletContext';
 import { apiRequest } from '@/lib/queryClient';
 import { createTransferTransaction } from '@/lib/solana';
+import { format } from 'date-fns';
+import { CalendarIcon } from 'lucide-react';
 import { 
   GoogleMap, 
   useJsApiLoader, 
@@ -35,6 +37,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
 import { useToast } from '@/hooks/use-toast';
 import { PublicKey } from '@solana/web3.js';
 
@@ -47,7 +56,7 @@ const formSchema = z.object({
   startLocation: z.string().min(3, "Start location is required"),
   endLocation: z.string().min(3, "End location is required"),
   rewardAmount: z.coerce.number().positive("Reward must be greater than 0"),
-  expiresAt: z.string().refine(val => new Date(val) > new Date(), {
+  expiresAt: z.date().refine(val => val > new Date(), {
     message: "Expiration date must be in the future",
   }),
 });
@@ -93,7 +102,7 @@ export default function CreateTaskForm({ recreateTaskId }: CreateTaskFormProps) 
       startLocation: '',
       endLocation: '',
       rewardAmount: 0.5,
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16), // Default to 7 days in the future
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Default to 7 days in the future
     },
   });
 
@@ -110,8 +119,8 @@ export default function CreateTaskForm({ recreateTaskId }: CreateTaskFormProps) 
         ...formData,
         // Convert rewardAmount to string as expected by server
         rewardAmount: String(formData.rewardAmount),
-        // Keep expiresAt as ISO string - server will convert to Date
-        expiresAt: new Date(formData.expiresAt).toISOString(),
+        // Convert expiresAt Date to ISO string - server will parse it
+        expiresAt: formData.expiresAt.toISOString(),
         routeData: routeData,
         commissionerWalletAddress: walletAddress,
       };
@@ -173,7 +182,7 @@ export default function CreateTaskForm({ recreateTaskId }: CreateTaskFormProps) 
         startLocation: task.startLocation,
         endLocation: task.endLocation,
         rewardAmount: Number(task.rewardAmount),
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16), // Default to 7 days from now
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Default to 7 days from now
       });
 
       // If there's route data and the map is loaded, calculate route
