@@ -362,6 +362,7 @@ export default function CreateTaskForm({ recreateTaskId }: CreateTaskFormProps) 
                           {...field} 
                         />
                       </FormControl>
+                      <p className="text-xs text-muted-foreground mt-1">Minimum reward is 0.01 SOL</p>
                       <FormMessage />
                     </FormItem>
                   )}
