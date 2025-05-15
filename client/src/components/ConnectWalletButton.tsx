@@ -98,7 +98,7 @@ export default function ConnectWalletButton() {
   // If wallet is connecting, show loading state
   if (walletStatus === 'connecting') {
     return (
-      <Button disabled className="flex items-center gap-2">
+      <Button disabled className="flex items-center gap-2 bg-[#309898]">
         <span className="material-icons text-sm animate-spin">sync</span>
         Connecting...
       </Button>
@@ -108,10 +108,10 @@ export default function ConnectWalletButton() {
   // ウォレット未接続時はシンプルなログインボタンのみ表示
   return (
     <div className="flex flex-col items-center">
-      {/* シンプルなウォレット接続ボタン */}
+      {/* シンプルなサインアップ/サインインボタン */}
       <Button onClick={handleConnect} className="flex items-center gap-2 w-full bg-[#309898] hover:bg-[#2a8585]">
         <span className="material-icons text-sm">account_balance_wallet</span>
-        Phantom Walletで接続
+        Sign up / Sign in
       </Button>
     </div>
   );
