@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useWallet } from '@/contexts/WalletContext';
 
 export default function Home() {
-  const { walletStatus } = useWallet();
+  const { walletStatus, connectWallet } = useWallet();
   const isConnected = walletStatus === 'connected';
 
   return (
@@ -49,7 +49,10 @@ export default function Home() {
                 </Link>
               </div>
             ) : (
-              <Button className="px-8 py-3 text-base bg-[#309898] hover:bg-[#2a8585]">
+              <Button 
+                onClick={connectWallet}
+                className="px-8 py-3 text-base bg-[#309898] hover:bg-[#2a8585]"
+              >
                 <span className="material-icons mr-2">account_balance_wallet</span>
                 Join Our Mission
               </Button>
@@ -169,6 +172,7 @@ export default function Home() {
               </div>
             ) : (
               <Button 
+                onClick={connectWallet}
                 variant="secondary" 
                 size="lg"
                 className="w-full px-8"
