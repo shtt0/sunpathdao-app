@@ -9,7 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useAppKit } from '@/config/reown-config';
+import { useAppKit } from '@reown/appkit/react';
 
 export default function ConnectWalletButton() {
   const { walletStatus, walletAddress, connectWallet, disconnectWallet } = useWallet();
@@ -105,16 +105,17 @@ export default function ConnectWalletButton() {
     );
   }
   
-  // ウォレット未接続時はReown AppKitボタンとPhantomボタンの両方を表示
+  // ウォレット未接続時はReown AppKitボタンを表示
   return (
     <div className="flex flex-col items-center gap-3">
       {/* Reown AppKit（Email & Social Login） */}
-      <div className="w-full mb-2 appkit-buttons-container">
+      <div className="w-full mb-2 appkit-buttons-container flex flex-col gap-2">
         <appkit-button />
+        <appkit-network-button />
       </div>
       
-      {/* 従来のPhantomウォレット接続ボタン */}
-      <div className="w-full text-center mb-1 text-sm text-gray-500">または</div>
+      {/* 従来のPhantomウォレット接続ボタン（バックアップとして残す） */}
+      <div className="w-full text-center my-2 text-sm text-gray-500">または</div>
       <Button onClick={handleConnect} className="flex items-center gap-2 w-full">
         <span className="material-icons text-sm">account_balance_wallet</span>
         Phantom Walletで接続

@@ -31,51 +31,8 @@ interface WalletProviderProps {
 export function WalletProvider({ children }: WalletProviderProps) {
   const [walletStatus, setWalletStatus] = useState<WalletStatus>('disconnected');
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
-  // App Kit initialization
-  const [appKit] = useState(() => {
-    try {
-      // Reown Cloud プロジェクトID
-      const projectId = '94bdc72864350b5bb20a86fdf3e6c59e'; // 実際のプロジェクトIDに置き換える必要があります
-      
-      // Solana アダプターの設定（シンプルな設定）
-      const solanaAdapter = new SolanaAdapter();
-      
-      // AppKit インスタンス作成 - シンプルな設定
-      const appKitInstance = createAppKit({
-        adapters: [solanaAdapter],
-        projectId,
-        // シンプルなネットワーク設定
-        networks: ['solana:mainnet'] as any,
-        metadata: {
-          name: 'SUNPATH DAO',
-          description: 'Location-based task economy powered by Solana',
-          url: window.location.origin,
-          icons: [`${window.location.origin}/generated-icon.png`]
-        },
-        features: {
-          email: true,
-          socials: [
-            "google",
-            "x",
-            "discord",
-            "github",
-          ],
-          emailShowWallets: true
-        }
-      });
-      
-      console.log("AppKit initialized successfully:", {
-        hasOpenMethod: typeof appKitInstance.open === 'function',
-        availableMethods: Object.keys(appKitInstance)
-      });
-      
-      return appKitInstance;
-    } catch (error) {
-      console.error("Error initializing AppKit:", error);
-      // エラー時はダミーオブジェクトを返してヌルエラーを防ぐ
-      return {} as any;
-    }
-  });
+  // Reown AppKitへのアクセスを取得 (App.tsxですでに初期化されています)
+  const appKit = useAppKit();
 
   // Check if wallet is already connected on mount
   useEffect(() => {
