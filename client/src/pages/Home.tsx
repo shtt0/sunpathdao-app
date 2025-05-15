@@ -44,7 +44,7 @@ export default function Home() {
                 </Link>
                 <Link href="/driver/tasks">
                   <Button variant="outline" className="px-8 py-3 text-base">
-                    Find Tasks to Drive
+                    Find Tasks
                   </Button>
                 </Link>
               </div>
