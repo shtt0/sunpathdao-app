@@ -231,7 +231,7 @@ export default function TaskTable({ onIncreaseReward, userId }: TaskTableProps) 
                             )}
                             
                             {isExpired && (
-                              <Link href={`/commissioner/create-task?recreate=${task.id}`}>
+                              <Link href={`/commissioner/create-task?recreate=${task.id}#create-task-top`}>
                                 <Button variant="outline" size="sm">
                                   Recreate
                                 </Button>
