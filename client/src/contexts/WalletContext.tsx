@@ -37,7 +37,7 @@ export function WalletProvider({ children }: WalletProviderProps) {
       const projectId = '94bdc72864350b5bb20a86fdf3e6c59e'; // Example project ID - should be replaced with actual project ID
       const solanaAdapter = new SolanaAdapter();
       
-      return createAppKit({
+      const appKitInstance = createAppKit({
         adapters: [solanaAdapter],
         projectId,
         // Using simplified network definition that's compatible with the API
@@ -62,6 +62,13 @@ export function WalletProvider({ children }: WalletProviderProps) {
         },
         allWallets: "SHOW",
       });
+      
+      console.log("AppKit initialized successfully:", {
+        hasOpenMethod: typeof appKitInstance.open === 'function',
+        availableMethods: Object.keys(appKitInstance)
+      });
+      
+      return appKitInstance;
     } catch (error) {
       console.error("Error initializing AppKit:", error);
       // Return a dummy object to avoid null errors
@@ -107,18 +114,61 @@ export function WalletProvider({ children }: WalletProviderProps) {
     }
   };
 
-  // Connect wallet using AppKit (supports Email & Social Login)
+  // Connect wallet using AppKit (supports Email & Social Login) or fallback to Phantom
   const connectWallet = async () => {
     try {
       setWalletStatus('connecting');
       
-      console.log('Opening Reown AppKit modal for wallet connection');
+      // Try to use AppKit if available
+      if (appKit && typeof appKit.open === 'function') {
+        console.log('Opening Reown AppKit modal for wallet connection');
+        
+        try {
+          // Open AppKit modal - this is the correct method based on docs
+          await appKit.open();
+          
+          // If we have an onConnect callback, address will be available there
+          // For now, we'll use Phantom as fallback
+          const phantom = (window as any).phantom?.solana;
+          
+          if (phantom?.isPhantom) {
+            console.log('Attempting to connect to Phantom wallet');
+            const { publicKey } = await phantom.connect();
+            
+            if (publicKey) {
+              const address = publicKey.toString();
+              console.log('Connected to wallet:', address);
+              setWalletAddress(address);
+              setWalletStatus('connected');
+              
+              // Register or update user in the database
+              await registerUser(address);
+              return;
+            }
+          }
+        } catch (appKitError) {
+          console.error('AppKit connection error:', appKitError);
+          // Continue to fallback method
+        }
+      }
       
-      // Open AppKit connection modal
-      const response = await appKit.connect();
+      // Fallback to Phantom wallet
+      const phantom = (window as any).phantom?.solana;
       
-      if (response?.address) {
-        const address = response.address;
+      if (!phantom?.isPhantom) {
+        console.error('Phantom wallet extension not detected');
+        alert('Wallet connection failed. Please install Phantom wallet from https://phantom.app/download');
+        setWalletStatus('disconnected');
+        return;
+      }
+      
+      console.log('Attempting to connect to Phantom wallet');
+      
+      // Connect to wallet
+      const { publicKey } = await phantom.connect();
+      
+      if (publicKey) {
+        const address = publicKey.toString();
         console.log('Connected to wallet:', address);
         setWalletAddress(address);
         setWalletStatus('connected');
@@ -126,7 +176,7 @@ export function WalletProvider({ children }: WalletProviderProps) {
         // Register or update user in the database
         await registerUser(address);
       } else {
-        console.error('No address returned from AppKit');
+        console.error('No public key returned from wallet');
         setWalletStatus('disconnected');
       }
     } catch (error) {
@@ -139,18 +189,21 @@ export function WalletProvider({ children }: WalletProviderProps) {
       } else {
         alert('Failed to connect wallet. Please try again.');
       }
-      
-      throw error;
     }
   };
 
   // Disconnect wallet
   const disconnectWallet = () => {
     try {
-      const phantom = (window as any).phantom?.solana;
-      
-      if (phantom?.isPhantom) {
-        phantom.disconnect();
+      // Try to disconnect using AppKit first
+      if (appKit.disconnect) {
+        appKit.disconnect();
+      } else {
+        // Fallback to phantom disconnect for backward compatibility
+        const phantom = (window as any).phantom?.solana;
+        if (phantom?.isPhantom) {
+          phantom.disconnect();
+        }
       }
       
       setWalletAddress(null);
@@ -163,20 +216,27 @@ export function WalletProvider({ children }: WalletProviderProps) {
   // Sign and send transaction
   const signAndSendTransaction = async (transaction: any): Promise<string> => {
     try {
-      const phantom = (window as any).phantom?.solana;
-      
-      if (!phantom?.isPhantom) {
-        throw new Error('Phantom wallet not installed');
+      // Try to use AppKit for signing transactions
+      if (appKit.signAndSendTransaction) {
+        const response = await appKit.signAndSendTransaction(transaction);
+        return response.signature;
+      } else {
+        // Fallback to phantom for backward compatibility
+        const phantom = (window as any).phantom?.solana;
+        
+        if (!phantom?.isPhantom) {
+          throw new Error('Wallet not available');
+        }
+        
+        if (walletStatus !== 'connected') {
+          throw new Error('Wallet not connected');
+        }
+        
+        // Sign the transaction
+        const { signature } = await phantom.signAndSendTransaction(transaction);
+        
+        return signature;
       }
-      
-      if (walletStatus !== 'connected') {
-        throw new Error('Wallet not connected');
-      }
-      
-      // Sign the transaction
-      const { signature } = await phantom.signAndSendTransaction(transaction);
-      
-      return signature;
     } catch (error) {
       console.error('Transaction error:', error);
       throw error;
