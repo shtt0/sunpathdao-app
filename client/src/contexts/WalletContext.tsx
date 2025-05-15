@@ -153,9 +153,9 @@ export function WalletProvider({ children }: WalletProviderProps) {
   // Disconnect wallet
   const disconnectWallet = () => {
     try {
-      // Try to disconnect using AppKit first
-      if (appKit.disconnect) {
-        appKit.disconnect();
+      // Try to disconnect using AppKit first - using close() instead of disconnect() since that's what's available
+      if (appKit && typeof appKit.close === 'function') {
+        appKit.close();
       } else {
         // Fallback to phantom disconnect for backward compatibility
         const phantom = (window as any).phantom?.solana;
@@ -174,27 +174,22 @@ export function WalletProvider({ children }: WalletProviderProps) {
   // Sign and send transaction
   const signAndSendTransaction = async (transaction: any): Promise<string> => {
     try {
-      // Try to use AppKit for signing transactions
-      if (appKit.signAndSendTransaction) {
-        const response = await appKit.signAndSendTransaction(transaction);
-        return response.signature;
-      } else {
-        // Fallback to phantom for backward compatibility
-        const phantom = (window as any).phantom?.solana;
-        
-        if (!phantom?.isPhantom) {
-          throw new Error('Wallet not available');
-        }
-        
-        if (walletStatus !== 'connected') {
-          throw new Error('Wallet not connected');
-        }
-        
-        // Sign the transaction
-        const { signature } = await phantom.signAndSendTransaction(transaction);
-        
-        return signature;
+      // AppKit はWalletConnectプロトコルを使用するため、標準インターフェースを使用
+      // 現在はPhantomウォレットへのフォールバックを行う
+      const phantom = (window as any).phantom?.solana;
+      
+      if (!phantom?.isPhantom) {
+        throw new Error('Wallet not available');
       }
+      
+      if (walletStatus !== 'connected') {
+        throw new Error('Wallet not connected');
+      }
+      
+      // Sign the transaction
+      const { signature } = await phantom.signAndSendTransaction(transaction);
+      
+      return signature;
     } catch (error) {
       console.error('Transaction error:', error);
       throw error;
