@@ -120,27 +120,27 @@ export default function Home() {
             </ul>
           </div>
 
-          {/* Blockchain Benefits */}
+          {/* Crypto Onboarding */}
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="flex items-center justify-center h-12 w-12 rounded-md bg-secondary text-white mb-4">
-              <span className="material-icons">security</span>
+              <span className="material-icons">currency_bitcoin</span>
             </div>
-            <h3 className="text-xl font-display font-bold mb-2">Blockchain Security</h3>
+            <h3 className="text-xl font-display font-bold mb-2">Easy Crypto Onboarding</h3>
             <p className="text-neutral-600">
-              Powered by Solana blockchain for fast, secure, and transparent transactions.
+              Even if you've never held crypto before, you can earn SOL easily with just a smartphone and a car or motorcycle.
             </p>
             <ul className="mt-4 space-y-2 text-sm text-neutral-500">
               <li className="flex items-start">
                 <span className="material-icons text-secondary text-sm mr-2">check_circle</span>
-                Secure escrow for task payments
+                Email and social media login
               </li>
               <li className="flex items-start">
                 <span className="material-icons text-secondary text-sm mr-2">check_circle</span>
-                Fast transaction settlement
+                No initial gas fees
               </li>
               <li className="flex items-start">
                 <span className="material-icons text-secondary text-sm mr-2">check_circle</span>
-                Transparent verification process
+                No signing required until you receive rewards
               </li>
             </ul>
           </div>
