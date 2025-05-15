@@ -3,8 +3,8 @@ import { Connection, PublicKey } from '@solana/web3.js';
 import { WalletStatus } from '@shared/types';
 import { apiRequest } from '@/lib/queryClient';
 import { API_ROUTES } from '@/lib/constants';
-import { createAppKit } from '@reown/appkit';
-import { SolanaAdapter } from '@reown/appkit-adapter-solana';
+import { createAppKit, useAppKit } from '@reown/appkit/react';
+import { SolanaAdapter } from '@reown/appkit-adapter-solana/react';
 
 interface WalletContextType {
   walletStatus: WalletStatus;
@@ -34,13 +34,17 @@ export function WalletProvider({ children }: WalletProviderProps) {
   // App Kit initialization
   const [appKit] = useState(() => {
     try {
-      const projectId = '94bdc72864350b5bb20a86fdf3e6c59e'; // Example project ID - should be replaced with actual project ID
+      // Reown Cloud プロジェクトID
+      const projectId = '94bdc72864350b5bb20a86fdf3e6c59e'; // 実際のプロジェクトIDに置き換える必要があります
+      
+      // Solana アダプターの設定（シンプルな設定）
       const solanaAdapter = new SolanaAdapter();
       
+      // AppKit インスタンス作成 - シンプルな設定
       const appKitInstance = createAppKit({
         adapters: [solanaAdapter],
         projectId,
-        // Using simplified network definition that's compatible with the API
+        // シンプルなネットワーク設定
         networks: ['solana:mainnet'] as any,
         metadata: {
           name: 'SUNPATH DAO',
@@ -55,12 +59,9 @@ export function WalletProvider({ children }: WalletProviderProps) {
             "x",
             "discord",
             "github",
-            "apple",
-            "facebook",
           ],
-          emailShowWallets: true,
-        },
-        allWallets: "SHOW",
+          emailShowWallets: true
+        }
       });
       
       console.log("AppKit initialized successfully:", {
@@ -71,7 +72,7 @@ export function WalletProvider({ children }: WalletProviderProps) {
       return appKitInstance;
     } catch (error) {
       console.error("Error initializing AppKit:", error);
-      // Return a dummy object to avoid null errors
+      // エラー時はダミーオブジェクトを返してヌルエラーを防ぐ
       return {} as any;
     }
   });
