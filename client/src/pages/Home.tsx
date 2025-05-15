@@ -38,12 +38,12 @@ export default function Home() {
             {isConnected ? (
               <div className="flex justify-center flex-col sm:flex-row gap-4">
                 <Link href="/commissioner/dashboard">
-                  <Button className="px-8 py-3 text-base">
+                  <Button className="px-8 py-3 text-base w-48">
                     Commission Tasks
                   </Button>
                 </Link>
                 <Link href="/driver/tasks">
-                  <Button variant="outline" className="px-8 py-3 text-base">
+                  <Button variant="outline" className="px-8 py-3 text-base w-48">
                     Find Tasks
                   </Button>
                 </Link>
