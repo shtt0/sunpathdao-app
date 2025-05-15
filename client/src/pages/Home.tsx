@@ -20,7 +20,7 @@ export default function Home() {
             playsInline
             preload="auto"
             className="w-full h-full object-cover"
-            style={{ opacity: '0.7' }}
+            style={{ opacity: '0.5' }}
           >
             <source src="movie1.mp4" type="video/mp4" />
             Your browser does not support the video tag.
@@ -29,14 +29,11 @@ export default function Home() {
         </div>
         
         {/* Content Overlay */}
-        <div className="text-center relative z-20 py-16">
-          <h1 className="text-4xl font-display font-bold text-neutral-900 sm:text-5xl md:text-6xl">
-            <span className="block">Drive Routes,</span>
-            <span className="block text-primary">Earn Crypto</span>
+        <div className="text-center relative z-20 py-20 px-4">
+          <h1 className="text-4xl font-display font-bold text-neutral-900 sm:text-5xl md:text-6xl mb-6">
+            <span className="block mb-3">Making our roads safer.</span>
+            <span className="block text-primary">Safe new roads for the world.</span>
           </h1>
-          <p className="mt-4 max-w-lg mx-auto text-base text-neutral-600 sm:text-lg md:mt-8 md:text-xl">
-            SUNPATH DAO: The world's first Solana blockchain-based platform connecting commissioners and drivers for location-based tasks.
-          </p>
           <div className="mt-8 sm:mt-10">
             {isConnected ? (
               <div className="flex justify-center flex-col sm:flex-row gap-4">
@@ -52,9 +49,9 @@ export default function Home() {
                 </Link>
               </div>
             ) : (
-              <Button className="px-8 py-3 text-base">
+              <Button className="px-8 py-3 text-base bg-[#309898] hover:bg-[#2a8585]">
                 <span className="material-icons mr-2">account_balance_wallet</span>
-                Connect Wallet to Get Started
+                Join Our Mission
               </Button>
             )}
           </div>
@@ -155,10 +152,10 @@ export default function Home() {
         <div className="px-6 py-12 sm:px-12 lg:flex lg:items-center lg:py-16">
           <div className="lg:w-0 lg:flex-1">
             <h2 className="text-3xl font-display font-bold text-white sm:text-4xl">
-              Ready to get started?
+              Ready to make safer roads?
             </h2>
             <p className="mt-4 max-w-3xl text-lg text-indigo-100">
-              Connect your Phantom wallet and join the RunRoute community today. Commission tasks or start earning SOL by completing routes.
+              Join our community today and become part of the global initiative to improve road safety through blockchain technology.
             </p>
           </div>
           <div className="mt-8 lg:mt-0 lg:ml-8">
@@ -166,7 +163,7 @@ export default function Home() {
               <div className="flex flex-col sm:flex-row sm:gap-4">
                 <Link href="/commissioner/create-task">
                   <Button variant="secondary" size="lg" className="w-full px-8">
-                    Create Your First Task
+                    Get Started Now
                   </Button>
                 </Link>
               </div>
@@ -177,7 +174,7 @@ export default function Home() {
                 className="w-full px-8"
               >
                 <span className="material-icons mr-2">account_balance_wallet</span>
-                Connect Wallet
+                Join Our Mission
               </Button>
             )}
           </div>
