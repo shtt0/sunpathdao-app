@@ -111,7 +111,7 @@ export default function Home() {
               </li>
               <li className="flex items-start">
                 <span className="material-icons text-accent text-sm mr-2">check_circle</span>
-                Record a 15-second video as proof
+                Record a video as proof
               </li>
               <li className="flex items-start">
                 <span className="material-icons text-accent text-sm mr-2">check_circle</span>
