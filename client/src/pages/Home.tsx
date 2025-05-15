@@ -10,21 +10,22 @@ export default function Home() {
   return (
     <div className="px-4 py-12 sm:px-6 lg:px-8">
       {/* Hero Section with Video Background */}
-      <div className="max-w-7xl mx-auto relative overflow-hidden">
-        {/* Video Background */}
+      <div className="max-w-7xl mx-auto relative overflow-hidden bg-neutral-100">
+        {/* Video Background with direct testing */}
         <div className="absolute inset-0 w-full h-full overflow-hidden rounded-xl">
-          <div className="absolute inset-0 bg-neutral-100 opacity-95 z-10"></div>
           <video
             autoPlay
             loop
             muted
             playsInline
+            preload="auto"
             className="w-full h-full object-cover"
-            style={{ opacity: '0.15' }}
+            style={{ opacity: '0.7' }}
           >
-            <source src="/movie1.mp4" type="video/mp4" />
+            <source src="movie1.mp4" type="video/mp4" />
             Your browser does not support the video tag.
           </video>
+          <div className="absolute inset-0 bg-neutral-100 opacity-30 z-10"></div>
         </div>
         
         {/* Content Overlay */}
