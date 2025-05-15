@@ -164,7 +164,7 @@ export default function Home() {
           <div className="mt-8 lg:mt-0 lg:ml-8">
             {isConnected ? (
               <div className="flex flex-col sm:flex-row sm:gap-4">
-                <Link href="/commissioner/create-task">
+                <Link href="/commissioner/create-task#create-task-top">
                   <Button variant="secondary" size="lg" className="w-full px-8">
                     Get Started Now
                   </Button>
