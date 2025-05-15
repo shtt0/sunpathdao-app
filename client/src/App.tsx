@@ -17,7 +17,7 @@ const projectId = 'd23ae7d79eb19db8cf9c5e7595ea6e1f';
 const metadata = {
   name: 'SUNPATH DAO',
   description: 'Location-based task economy powered by Solana',
-  url: 'https://sunpathdao.replit.app', // 正確なドメイン名を使用
+  url: 'https://sunpathdao.replit.app', // 正確なドメイン名を使用（大文字小文字を合わせる）
   icons: ['https://sunpathdao.replit.app/generated-icon.png']
 };
 
