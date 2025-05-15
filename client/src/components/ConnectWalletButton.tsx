@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useWallet } from '@/contexts/WalletContext';
 import { Button } from '@/components/ui/button';
 import { formatWalletAddress } from '@/lib/utils';
@@ -9,6 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useAppKit } from '@/config/reown-config';
 
 export default function ConnectWalletButton() {
   const { walletStatus, walletAddress, connectWallet, disconnectWallet } = useWallet();
@@ -16,6 +17,16 @@ export default function ConnectWalletButton() {
   const [isPhantomInstalled, setIsPhantomInstalled] = useState<boolean>(() => {
     return typeof window !== 'undefined' && !!(window as any).phantom?.solana;
   });
+  
+  // Reown AppKit初期化
+  useAppKit();
+  
+  // Reown AppKitのウェブコンポーネントのロードをチェック
+  useEffect(() => {
+    // カスタム要素が定義されているかチェック
+    const isAppKitButtonDefined = !!customElements.get('appkit-button');
+    console.log('AppKit Web Components available:', isAppKitButtonDefined);
+  }, []);
   
   const handleConnect = async () => {
     try {
@@ -94,11 +105,20 @@ export default function ConnectWalletButton() {
     );
   }
   
-  // If wallet is disconnected, show connect button
+  // ウォレット未接続時はReown AppKitボタンとPhantomボタンの両方を表示
   return (
-    <Button onClick={handleConnect} className="flex items-center gap-2">
-      <span className="material-icons text-sm">account_balance_wallet</span>
-      Connect Wallet
-    </Button>
+    <div className="flex flex-col items-center gap-3">
+      {/* Reown AppKit（Email & Social Login） */}
+      <div className="w-full mb-2 appkit-buttons-container">
+        <appkit-button />
+      </div>
+      
+      {/* 従来のPhantomウォレット接続ボタン */}
+      <div className="w-full text-center mb-1 text-sm text-gray-500">または</div>
+      <Button onClick={handleConnect} className="flex items-center gap-2 w-full">
+        <span className="material-icons text-sm">account_balance_wallet</span>
+        Phantom Walletで接続
+      </Button>
+    </div>
   );
 }

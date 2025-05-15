@@ -3,6 +3,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
 import { WalletProvider } from "./contexts/WalletContext";
+import { modal as reownModal } from '@/config/reown-config';
 
 import Navbar from "./components/layout/Navbar";
 import Footer from "./components/layout/Footer";
@@ -48,6 +49,8 @@ function Router() {
 }
 
 function App() {
+  // このコンポーネントでReownモーダルの初期化
+  // useAppKitフックは不要、インポートしたモーダルで自動初期化
   return (
     <QueryClientProvider client={queryClient}>
       <WalletProvider>
