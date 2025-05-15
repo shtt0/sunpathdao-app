@@ -9,9 +9,26 @@ export default function Home() {
 
   return (
     <div className="px-4 py-12 sm:px-6 lg:px-8">
-      {/* Hero Section */}
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center">
+      {/* Hero Section with Video Background */}
+      <div className="max-w-7xl mx-auto relative overflow-hidden">
+        {/* Video Background */}
+        <div className="absolute inset-0 w-full h-full overflow-hidden rounded-xl">
+          <div className="absolute inset-0 bg-neutral-100 opacity-95 z-10"></div>
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="w-full h-full object-cover"
+            style={{ opacity: '0.15' }}
+          >
+            <source src="/movie1.mp4" type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+        </div>
+        
+        {/* Content Overlay */}
+        <div className="text-center relative z-20 py-16">
           <h1 className="text-4xl font-display font-bold text-neutral-900 sm:text-5xl md:text-6xl">
             <span className="block">Drive Routes,</span>
             <span className="block text-primary">Earn Crypto</span>
