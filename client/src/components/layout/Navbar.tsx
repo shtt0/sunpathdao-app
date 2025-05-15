@@ -160,7 +160,7 @@ export default function Navbar() {
                       Dashboard
                     </Link>
                     <Link 
-                      href="/commissioner/create-task#create-task-top"
+                      href="/commissioner/create-task"
                       className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-neutral-500 hover:bg-neutral-50 hover:border-neutral-300 hover:text-neutral-700"
                     >
                       Create Task

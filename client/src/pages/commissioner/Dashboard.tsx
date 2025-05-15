@@ -398,7 +398,7 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="mt-4 flex md:mt-0 md:ml-4">
-            <Link href="/commissioner/create-task#create-task-top">
+            <Link href="/commissioner/create-task">
               <Button className="inline-flex items-center">
                 <span className="material-icons mr-2 text-sm">add</span>
                 Create New Task

@@ -155,7 +155,7 @@ export default function Home() {
         <div className="px-6 py-12 sm:px-12 lg:flex lg:items-center lg:py-16">
           <div className="lg:w-0 lg:flex-1">
             <h2 className="text-3xl font-display font-bold text-white sm:text-4xl">
-              Ready to make safer roads?
+              Ready to make our roads safer?
             </h2>
             <p className="mt-4 max-w-3xl text-lg text-indigo-100">
               Join our community today and become part of the global initiative to improve road safety through blockchain technology.
@@ -164,7 +164,7 @@ export default function Home() {
           <div className="mt-8 lg:mt-0 lg:ml-8">
             {isConnected ? (
               <div className="flex flex-col sm:flex-row sm:gap-4">
-                <Link href="/commissioner/create-task#create-task-top">
+                <Link href="/commissioner/create-task">
                   <Button variant="secondary" size="lg" className="w-full px-8">
                     Get Started Now
                   </Button>
