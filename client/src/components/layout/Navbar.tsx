@@ -129,18 +129,26 @@ export default function Navbar() {
                   Achievement
                 </Link>
                 <div className="p-3">
-                  <Button
-                    asChild
-                    variant={isCommissionerView ? "outline" : "default"}
-                    className={cn(
-                      "w-full justify-center",
-                      isCommissionerView ? "bg-primary-light/10 text-primary border-primary" : "bg-primary text-white hover:bg-primary/90"
-                    )}
-                  >
-                    <Link href="/commissioner/dashboard">
-                      Commission Mode
-                    </Link>
-                  </Button>
+                  {isCommissionerView ? (
+                    <Button
+                      asChild
+                      variant="outline"
+                      className="w-full justify-center bg-primary-light/10 text-primary border-primary"
+                    >
+                      <Link href="/commissioner/dashboard">
+                        Commission Mode
+                      </Link>
+                    </Button>
+                  ) : (
+                    <Button
+                      asChild
+                      className="w-full justify-center bg-[#309898] text-white hover:bg-[#278080]"
+                    >
+                      <Link href="/commissioner/dashboard">
+                        Commission Mode
+                      </Link>
+                    </Button>
+                  )}
                 </div>
                 
                 {isCommissionerView && (
