@@ -3,6 +3,8 @@ import { Connection, PublicKey } from '@solana/web3.js';
 import { WalletStatus } from '@shared/types';
 import { apiRequest } from '@/lib/queryClient';
 import { API_ROUTES } from '@/lib/constants';
+import { createAppKit } from '@reown/appkit';
+import { SolanaAdapter } from '@reown/appkit-adapter-solana';
 
 interface WalletContextType {
   walletStatus: WalletStatus;
@@ -29,6 +31,43 @@ interface WalletProviderProps {
 export function WalletProvider({ children }: WalletProviderProps) {
   const [walletStatus, setWalletStatus] = useState<WalletStatus>('disconnected');
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  // App Kit initialization
+  const [appKit] = useState(() => {
+    try {
+      const projectId = '94bdc72864350b5bb20a86fdf3e6c59e'; // Example project ID - should be replaced with actual project ID
+      const solanaAdapter = new SolanaAdapter();
+      
+      return createAppKit({
+        adapters: [solanaAdapter],
+        projectId,
+        // Using simplified network definition that's compatible with the API
+        networks: ['solana:mainnet'] as any,
+        metadata: {
+          name: 'SUNPATH DAO',
+          description: 'Location-based task economy powered by Solana',
+          url: window.location.origin,
+          icons: [`${window.location.origin}/generated-icon.png`]
+        },
+        features: {
+          email: true,
+          socials: [
+            "google",
+            "x",
+            "discord",
+            "github",
+            "apple",
+            "facebook",
+          ],
+          emailShowWallets: true,
+        },
+        allWallets: "SHOW",
+      });
+    } catch (error) {
+      console.error("Error initializing AppKit:", error);
+      // Return a dummy object to avoid null errors
+      return {} as any;
+    }
+  });
 
   // Check if wallet is already connected on mount
   useEffect(() => {
@@ -68,29 +107,18 @@ export function WalletProvider({ children }: WalletProviderProps) {
     }
   };
 
-  // Connect wallet
+  // Connect wallet using AppKit (supports Email & Social Login)
   const connectWallet = async () => {
     try {
       setWalletStatus('connecting');
       
-      // Check if Phantom wallet exists
-      const phantom = (window as any).phantom?.solana;
+      console.log('Opening Reown AppKit modal for wallet connection');
       
-      if (!phantom?.isPhantom) {
-        console.error('Phantom wallet extension not detected');
-        // Use alert to notify user since we don't have access to toast here
-        alert('Phantom wallet extension is not installed. Please install it from https://phantom.app/download');
-        setWalletStatus('disconnected');
-        return;
-      }
+      // Open AppKit connection modal
+      const response = await appKit.connect();
       
-      console.log('Attempting to connect to Phantom wallet');
-      
-      // Connect to wallet
-      const { publicKey } = await phantom.connect();
-      
-      if (publicKey) {
-        const address = publicKey.toString();
+      if (response?.address) {
+        const address = response.address;
         console.log('Connected to wallet:', address);
         setWalletAddress(address);
         setWalletStatus('connected');
@@ -98,7 +126,7 @@ export function WalletProvider({ children }: WalletProviderProps) {
         // Register or update user in the database
         await registerUser(address);
       } else {
-        console.error('No public key returned from wallet');
+        console.error('No address returned from AppKit');
         setWalletStatus('disconnected');
       }
     } catch (error) {
