@@ -105,18 +105,11 @@ export default function ConnectWalletButton() {
     );
   }
   
-  // ウォレット未接続時はReown AppKitボタンを表示
+  // ウォレット未接続時はシンプルなログインボタンのみ表示
   return (
-    <div className="flex flex-col items-center gap-3">
-      {/* Reown AppKit（Email & Social Login） */}
-      <div className="w-full mb-2 appkit-buttons-container flex flex-col gap-2">
-        <appkit-button />
-        <appkit-network-button />
-      </div>
-      
-      {/* 従来のPhantomウォレット接続ボタン（バックアップとして残す） */}
-      <div className="w-full text-center my-2 text-sm text-gray-500">または</div>
-      <Button onClick={handleConnect} className="flex items-center gap-2 w-full">
+    <div className="flex flex-col items-center">
+      {/* シンプルなウォレット接続ボタン */}
+      <Button onClick={handleConnect} className="flex items-center gap-2 w-full bg-[#309898] hover:bg-[#2a8585]">
         <span className="material-icons text-sm">account_balance_wallet</span>
         Phantom Walletで接続
       </Button>
