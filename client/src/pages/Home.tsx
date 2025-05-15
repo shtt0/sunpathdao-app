@@ -126,7 +126,7 @@ export default function Home() {
           {/* Crypto Onboarding */}
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="flex items-center justify-center h-12 w-12 rounded-md bg-secondary text-white mb-4">
-              <span className="material-icons">currency_bitcoin</span>
+              <span className="material-icons">account_balance_wallet</span>
             </div>
             <h3 className="text-xl font-display font-bold mb-2">Easy Crypto Onboarding</h3>
             <p className="text-neutral-600">
