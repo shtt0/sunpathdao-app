@@ -131,10 +131,10 @@ export default function Navbar() {
                 <div className="p-3">
                   <Button
                     asChild
-                    variant="outline"
+                    variant={isCommissionerView ? "outline" : "default"}
                     className={cn(
                       "w-full justify-center",
-                      isCommissionerView && "bg-primary-light/10 text-primary border-primary"
+                      isCommissionerView ? "bg-primary-light/10 text-primary border-primary" : "bg-primary text-white hover:bg-primary/90"
                     )}
                   >
                     <Link href="/commissioner/dashboard">
