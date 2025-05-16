@@ -93,6 +93,30 @@
     padding-top: env(safe-area-inset-top, 0);
   }
   
+  .safe-area-inset-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+  
+  .safe-area-inset-left {
+    padding-left: env(safe-area-inset-left, 0);
+  }
+  
+  .safe-area-inset-right {
+    padding-right: env(safe-area-inset-right, 0);
+  }
+  
+  /* iOS Safari fixes */
+  @supports (-webkit-touch-callout: none) {
+    body {
+      -webkit-overflow-scrolling: touch;
+      min-height: -webkit-fill-available;
+    }
+    
+    a, button {
+      -webkit-tap-highlight-color: transparent;
+    }
+  }
+  
   /* Map related styles */
   .map-container {
     @apply w-full h-96 rounded-lg bg-neutral-200 shadow-md overflow-hidden border border-border;

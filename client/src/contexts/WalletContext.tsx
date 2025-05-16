@@ -79,31 +79,32 @@ export function WalletProvider({ children }: WalletProviderProps) {
     try {
       setWalletStatus('connecting');
       
-      // Use AppKit if available
+      // AppKitが利用可能かチェック
       if (appKit && typeof appKit.open === 'function') {
         console.log('Opening Reown AppKit modal for wallet connection');
         
+        // ウォレット接続を試みる
+        let response = null;
         try {
-          // ウォレット接続をリクエスト
-          const response = await appKit.open();
-          
-          // 接続成功した場合（ユーザーが承認した場合）
-          if (response) {
-            console.log('AppKit connection successful');
-            const generatedAddr = "Demo" + Date.now().toString().slice(-8);
-            setWalletAddress(generatedAddr);
-            setWalletStatus('connected');
-            await registerUser(generatedAddr);
-          } else {
-            // ユーザーがキャンセルした場合
-            console.log('AppKit connection was canceled by user');
-            setWalletStatus('disconnected');
-          }
-        } catch (appKitError) {
-          // エラー発生時
-          console.error('AppKit connection error:', appKitError);
+          response = await appKit.open();
+        } catch (error) {
+          console.error('AppKit connection error:', error);
           setWalletStatus('disconnected');
-          alert('Failed to connect wallet. Please try again.');
+          return;
+        }
+        
+        // 接続成功した場合
+        if (response) {
+          console.log('AppKit connection successful');
+          // デモ用のウォレットアドレスを生成
+          const generatedAddr = "Demo" + Date.now().toString().slice(-8);
+          setWalletAddress(generatedAddr);
+          setWalletStatus('connected');
+          await registerUser(generatedAddr);
+        } else {
+          // キャンセルされた場合
+          console.log('AppKit connection was canceled by user');
+          setWalletStatus('disconnected');
         }
         
         return;
