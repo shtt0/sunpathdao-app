@@ -50,14 +50,19 @@ export async function hasEnoughSol(
 ): Promise<boolean> {
   try {
     const balance = await connection.getBalance(pubkey);
-    return balance >= solToLamports(requiredSol);
+    const requiredLamports = solToLamports(requiredSol);
+    
+    // Include some buffer for transaction fees (0.000005 SOL)
+    const feeBuffer = 5000;
+    
+    return balance >= (requiredLamports + feeBuffer);
   } catch (error) {
     console.error('Error checking balance:', error);
     return false;
   }
 }
 
-// Get the SOL balance of an account
+// Get SOL balance for a public key
 export async function getSolBalance(pubkey: PublicKey): Promise<number> {
   try {
     const balance = await connection.getBalance(pubkey);
@@ -105,6 +110,7 @@ export async function createTaskTransaction(
     console.log('Task ID bytes:', Array.from(taskIdBytes));
     
     // 報酬額のバイト列作成（64ビット整数）
+    // 注意: rewardAmountはすでにlamports単位なので変換不要
     const rewardBytes = new Uint8Array(8);
     const view = new DataView(rewardBytes.buffer);
     // DataViewを使って64ビット値を書き込み
@@ -130,7 +136,7 @@ export async function createTaskTransaction(
     
     console.log('Combined buffer length:', combinedBuffer.length);
     
-    // ブラウザ環境ではBufferが直接利用できないのでUint8Arrayをそのまま使用
+    // ブラウザ環境では Buffer が直接利用できないため Uint8Array をそのまま使用
     const data = combinedBuffer;
     
     // シンプルなインストラクションの作成
@@ -184,7 +190,7 @@ export async function acceptTaskTransaction(
     // プログラムIDをPublicKeyに変換
     const programId = new PublicKey(SOLANA_CONSTANTS.PROGRAM_ID);
     
-    // データバッファの作成
+    // データバッファの作成 - スプレッド構文を使わずにバッファを連結
     const instructionIndex = new Uint8Array([1]); // 1 = acceptTask
     const taskIdBytes = new Uint8Array(new Uint32Array([taskId]).buffer);
     
@@ -197,8 +203,7 @@ export async function acceptTaskTransaction(
     offset += instructionIndex.length;
     combinedBuffer.set(taskIdBytes, offset);
     
-    // ブラウザ環境ではBufferが直接利用できないのでUint8Arrayをそのまま使用
-    const data = combinedBuffer;
+    const data = Buffer.from(combinedBuffer);
     
     // インストラクションの作成
     const instruction = new TransactionInstruction({
@@ -220,22 +225,22 @@ export async function acceptTaskTransaction(
     
     return transaction;
   } catch (error) {
-    console.error('Error creating acceptTask transaction:', error);
-    throw new Error('Failed to create acceptTask transaction');
+    console.error('Error creating accept task transaction:', error);
+    throw new Error('Failed to create accept task transaction');
   }
 }
 
 // タスク拒否用のトランザクションを作成する
 export async function rejectTaskTransaction(
   commissionerPubkey: PublicKey, // タスク作成者のウォレットアドレス
-  taskId: number,                // 拒否するタスクのID
-  submissionId: number           // 拒否する提出物のID
+  taskId: number,              // 拒否するタスクのID
+  submissionId: number         // 拒否する提出物のID
 ): Promise<Transaction> {
   try {
     // プログラムIDをPublicKeyに変換
     const programId = new PublicKey(SOLANA_CONSTANTS.PROGRAM_ID);
     
-    // データバッファの作成
+    // データバッファの作成 - スプレッド構文を使わずにバッファを連結
     const instructionIndex = new Uint8Array([2]); // 2 = rejectTask
     const taskIdBytes = new Uint8Array(new Uint32Array([taskId]).buffer);
     const submissionIdBytes = new Uint8Array(new Uint32Array([submissionId]).buffer);
@@ -251,8 +256,7 @@ export async function rejectTaskTransaction(
     offset += taskIdBytes.length;
     combinedBuffer.set(submissionIdBytes, offset);
     
-    // ブラウザ環境ではBufferが直接利用できないのでUint8Arrayをそのまま使用
-    const data = combinedBuffer;
+    const data = Buffer.from(combinedBuffer);
     
     // インストラクションの作成
     const instruction = new TransactionInstruction({
@@ -274,12 +278,12 @@ export async function rejectTaskTransaction(
     
     return transaction;
   } catch (error) {
-    console.error('Error creating rejectTask transaction:', error);
-    throw new Error('Failed to create rejectTask transaction');
+    console.error('Error creating reject task transaction:', error);
+    throw new Error('Failed to create reject task transaction');
   }
 }
 
-// 期限切れタスクの資金回収用のトランザクションを作成する
+// 資金回収用のトランザクションを作成する
 export async function reclaimTaskFundsTransaction(
   commissionerPubkey: PublicKey, // タスク作成者のウォレットアドレス
   taskId: number                // 資金を回収するタスクのID
@@ -288,7 +292,7 @@ export async function reclaimTaskFundsTransaction(
     // プログラムIDをPublicKeyに変換
     const programId = new PublicKey(SOLANA_CONSTANTS.PROGRAM_ID);
     
-    // データバッファの作成
+    // データバッファの作成 - スプレッド構文を使わずにバッファを連結
     const instructionIndex = new Uint8Array([3]); // 3 = reclaimTaskFunds
     const taskIdBytes = new Uint8Array(new Uint32Array([taskId]).buffer);
     
@@ -301,13 +305,12 @@ export async function reclaimTaskFundsTransaction(
     offset += instructionIndex.length;
     combinedBuffer.set(taskIdBytes, offset);
     
-    // ブラウザ環境ではBufferが直接利用できないのでUint8Arrayをそのまま使用
-    const data = combinedBuffer;
+    const data = Buffer.from(combinedBuffer);
     
     // インストラクションの作成
     const instruction = new TransactionInstruction({
       keys: [
-        { pubkey: commissionerPubkey, isSigner: true, isWritable: true }, // タスク作成者
+        { pubkey: commissionerPubkey, isSigner: true, isWritable: true }, // タスク作成者（資金の受取先）
         { pubkey: programId, isSigner: false, isWritable: false },       // プログラム自体
       ],
       programId,
@@ -324,7 +327,7 @@ export async function reclaimTaskFundsTransaction(
     
     return transaction;
   } catch (error) {
-    console.error('Error creating reclaimTaskFunds transaction:', error);
-    throw new Error('Failed to create reclaimTaskFunds transaction');
+    console.error('Error creating reclaim funds transaction:', error);
+    throw new Error('Failed to create reclaim funds transaction');
   }
 }
