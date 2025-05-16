@@ -10,9 +10,9 @@ export default function Home() {
   return (
     <div className="px-4 py-12 sm:px-6 lg:px-8">
       {/* Hero Section with Video Background */}
-      <div className="max-w-7xl mx-auto relative overflow-hidden bg-neutral-100">
+      <div className="max-w-7xl mx-auto relative overflow-hidden bg-neutral-100 rounded-xl">
         {/* Video Background with direct testing */}
-        <div className="absolute inset-0 w-full h-full overflow-hidden rounded-xl">
+        <div className="absolute inset-0 w-full h-full overflow-hidden">
           <video
             autoPlay
             loop
@@ -29,7 +29,7 @@ export default function Home() {
         </div>
         
         {/* Content Overlay */}
-        <div className="text-center relative z-20 py-20 px-4">
+        <div className="text-center relative z-20 py-16 sm:py-20 px-4 safe-area-inset-top">
           <h1 className="text-4xl font-display font-bold text-neutral-900 sm:text-5xl md:text-6xl mb-6">
             <span className="block mb-3">Making our roads safer.</span>
             <span className="block text-primary">Safe new roads for the world.</span>
