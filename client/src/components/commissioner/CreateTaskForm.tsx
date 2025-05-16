@@ -7,7 +7,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { API_ROUTES, COUNTRIES, MAPS_CONFIG } from '@/lib/constants';
 import { useWallet } from '@/contexts/WalletContext';
 import { apiRequest } from '@/lib/queryClient';
-import { createTransferTransaction } from '@/lib/solana';
+import { createTaskTransaction } from '@/lib/solana';
 import { format } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
 import { 
@@ -114,21 +114,64 @@ export default function CreateTaskForm({ recreateTaskId }: CreateTaskFormProps) 
         throw new Error("Wallet is not connected");
       }
       
-      // Create a payload for the task with proper type conversions
-      const taskData = {
-        ...formData,
-        // Convert rewardAmount to string as expected by server
-        rewardAmount: String(formData.rewardAmount),
-        // Convert expiresAt Date to ISO string - server will parse it
-        expiresAt: formData.expiresAt.toISOString(),
-        routeData: routeData,
-        commissionerWalletAddress: walletAddress,
-      };
+      setIsLockingFunds(true);
       
-      console.log('Submitting task with converted data:', taskData);
-      
-      // 2. Submit the task to the server
-      return apiRequest('POST', `${API_ROUTES.TASKS}`, taskData);
+      try {
+        // Create a payload for the task with proper type conversions
+        const taskData = {
+          ...formData,
+          // Convert rewardAmount to string as expected by server
+          rewardAmount: String(formData.rewardAmount),
+          // Convert expiresAt Date to ISO string - server will parse it
+          expiresAt: formData.expiresAt.toISOString(),
+          routeData: routeData,
+          commissionerWalletAddress: walletAddress,
+        };
+        
+        console.log('Submitting task with converted data:', taskData);
+        
+        // Calculate time in seconds from now to the expiry date
+        const now = new Date();
+        const expiryDate = new Date(formData.expiresAt);
+        const durationSeconds = Math.floor((expiryDate.getTime() - now.getTime()) / 1000);
+        
+        // Calculate reward amount in lamports (1 SOL = 1,000,000,000 lamports)
+        const rewardAmountLamports = Math.floor(formData.rewardAmount * 1000000000);
+        
+        // Generate a task ID based on the current timestamp
+        const taskId = Math.floor(Date.now() / 1000);
+        
+        // Create Solana wallet public key from wallet address
+        const walletPublicKey = new PublicKey(walletAddress);
+        
+        // Create a Solana transaction to lock the funds
+        console.log(`Creating task transaction with: taskId=${taskId}, reward=${rewardAmountLamports} lamports, duration=${durationSeconds} seconds`);
+        const transaction = await createTaskTransaction(
+          walletPublicKey,
+          taskId,
+          rewardAmountLamports,
+          durationSeconds
+        );
+        
+        // Sign and send the transaction
+        const signature = await signAndSendTransaction(transaction);
+        
+        console.log('Task creation transaction signature:', signature);
+        
+        // Add transaction signature to the task data
+        const taskDataWithTx = {
+          ...taskData,
+          blockchainTransactionId: signature,
+          blockchainTaskId: taskId,
+        };
+        
+        // 2. Submit the task to the server
+        return apiRequest('POST', `${API_ROUTES.TASKS}`, taskDataWithTx);
+      } catch (error) {
+        console.error('Error creating blockchain transaction:', error);
+        setIsLockingFunds(false);
+        throw error;
+      }
     },
     onSuccess: (data) => {
       toast({
@@ -289,8 +332,8 @@ export default function CreateTaskForm({ recreateTaskId }: CreateTaskFormProps) 
   const onSubmit = async (values: FormValues) => {
     if (walletStatus !== 'connected') {
       toast({
-        title: 'Wallet Not Connected',
-        description: 'Please connect your wallet to create a task',
+        title: 'ウォレット未接続',
+        description: 'タスクを作成するには、ウォレットを接続してください',
         variant: 'destructive',
       });
       return;
@@ -298,21 +341,32 @@ export default function CreateTaskForm({ recreateTaskId }: CreateTaskFormProps) 
     
     if (!routeData) {
       toast({
-        title: 'Route Required',
-        description: 'Please set both start and end locations and calculate a route',
+        title: 'ルート設定が必要',
+        description: '出発地点と目的地を設定し、ルートを計算してください',
         variant: 'destructive',
       });
       return;
     }
     
     try {
-      setIsLockingFunds(true);
+      // タスク作成情報をユーザーに表示
+      toast({
+        title: 'トランザクション処理中',
+        description: `${values.rewardAmount} SOLをロックしてタスクを作成します。ウォレットの承認をお願いします。`,
+      });
       
-      // Submit the form data
+      // フォームデータを送信
       await createTaskMutation.mutateAsync(values);
       
     } catch (error) {
       console.error('Error submitting form:', error);
+      
+      toast({
+        title: 'タスク作成エラー',
+        description: error instanceof Error ? error.message : '不明なエラーが発生しました',
+        variant: 'destructive',
+      });
+      
       setIsLockingFunds(false);
     }
   };
