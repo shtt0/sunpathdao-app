@@ -7,11 +7,9 @@ export const API_ROUTES = {
 
 // Solana constants
 export const SOLANA_CONSTANTS = {
-  NETWORK: process.env.NODE_ENV === 'production' ? 'mainnet-beta' : 'devnet',
-  // Helius RPCエンドポイントを使用
-  RPC_URL: process.env.NODE_ENV === 'production' 
-    ? 'https://mainnet.helius-rpc.com/?api-key=8af303e8-8551-44c9-b69b-e450b4e00455' // Helius mainnet
-    : 'https://devnet.helius-rpc.com/?api-key=8af303e8-8551-44c9-b69b-e450b4e00455', // Helius devnet
+  NETWORK: 'devnet', // 開発段階なので常にdevnetを使用
+  // 常にDevnetのHelius RPCエンドポイントを使用
+  RPC_URL: 'https://devnet.helius-rpc.com/?api-key=8af303e8-8551-44c9-b69b-e450b4e00455', // Helius devnet
   PROGRAM_ID: process.env.VITE_SOLANA_PROGRAM_ID || 'Drr2eM6yoGXL2QZHdaFzXzUDDPQarV8acbbYWTBAtNyE', // 正しいプログラムID
   MIN_DEPOSIT_AMOUNT: 0.1, // コミッショナーに必要な最低デポジット量（SOL）
 };
