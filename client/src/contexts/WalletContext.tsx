@@ -2,7 +2,8 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { WalletStatus } from '@shared/types';
 import { apiRequest } from '@/lib/queryClient';
-import { API_ROUTES } from '@/lib/constants';
+import { API_ROUTES, SOLANA_CONSTANTS } from '@/lib/constants';
+import { connection } from '@/lib/solana';
 // Import AppKit with type any to avoid TypeScript errors with current version
 // In production, we would properly type this based on the AppKit API
 import { createAppKit, useAppKit } from '@reown/appkit/react';
@@ -176,33 +177,51 @@ export function WalletProvider({ children }: WalletProviderProps) {
         // シリアライズしたトランザクションをウォレットに送信して署名してもらう
         console.log('トランザクションに署名を依頼中...');
         
-        // 本番環境では実際のウォレット署名を使用
-        let signature = 'tx-' + Date.now().toString();
+        // トランザクションをシリアライズ
+        const serializedTransaction = Buffer.from(
+          transaction.serialize({ verifySignatures: false })
+        ).toString('base64');
         
-        // 実際のウォレット署名ロジックは将来の実装
-        // ------------------------------------------------
-        // 本番環境で以下のコードを有効にする
-        /*
+        // トランザクションに署名
+        const solanaConnection = connection;
+        
+        // 署名と送信を実行
+        let signature;
+        
+        // AppKit SDK (Reown)を使用した実装
         if ((appKit as any).solana && typeof (appKit as any).solana.signAndSendTransaction === 'function') {
-          // トランザクションをシリアライズ
-          const serializedTransaction = transaction.serialize({ verifySignatures: false }).toString('base64');
-          
-          // Reownの実装を使用
+          console.log('AppKit SDKを使用してトランザクションに署名します');
           signature = await (appKit as any).solana.signAndSendTransaction(serializedTransaction);
-        } else if (typeof window !== 'undefined' && (window as any).phantom?.solana) {
-          // Phantomウォレットを使用
+        } 
+        // Phantom Walletを使用した実装
+        else if (typeof window !== 'undefined' && (window as any).phantom?.solana) {
+          console.log('Phantom Walletを使用してトランザクションに署名します');
           const phantomWallet = (window as any).phantom?.solana;
-          const signedTx = await phantomWallet.signTransaction(transaction);
           
-          // 署名されたトランザクションを送信
-          const solanaConnection = new Connection(SOLANA_CONSTANTS.RPC_URL);
-          signature = await solanaConnection.sendRawTransaction(signedTx.serialize());
-          
-          // トランザクションの確認を待つ
-          await solanaConnection.confirmTransaction(signature, 'confirmed');
+          // 署名プロセス
+          try {
+            // トランザクションに署名
+            const signedTx = await phantomWallet.signTransaction(transaction);
+            
+            // 署名されたトランザクションを送信
+            signature = await solanaConnection.sendRawTransaction(signedTx.serialize());
+            
+            // トランザクションの確認を待つ
+            const confirmation = await solanaConnection.confirmTransaction(signature, 'confirmed');
+            
+            // 確認結果をチェック
+            if (confirmation.value.err) {
+              throw new Error(`トランザクション確認エラー: ${confirmation.value.err}`);
+            }
+          } catch (phantomError) {
+            console.error('Phantom Walletでの署名エラー:', phantomError);
+            throw phantomError;
+          }
+        } 
+        // どちらの方法も使用できない場合
+        else {
+          throw new Error('利用可能なウォレット署名メソッドがありません。AppKitまたはPhantom Walletが必要です。');
         }
-        */
-        // ------------------------------------------------
         
         console.log('トランザクション署名完了:', signature);
         return signature;
