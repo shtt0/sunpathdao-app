@@ -41,10 +41,10 @@ export default function RejectTaskButton({
       const walletPublicKey = new PublicKey(walletAddress);
       
       // タスク拒否トランザクションを生成
+      // IDLを確認したところ、submissionIdパラメータは不要
       const transaction = await rejectTaskTransaction(
         walletPublicKey,
-        taskId,
-        submissionId
+        taskId
       );
       
       // トランザクションに署名して送信

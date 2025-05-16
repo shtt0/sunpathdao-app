@@ -189,155 +189,183 @@ export async function acceptTaskTransaction(
   taskId: number               // 承認するタスクのID
 ): Promise<Transaction> {
   try {
+    console.log(`Creating accept task transaction:
+      Driver: ${driverPubkey.toString()}
+      Task ID: ${taskId}`);
+    
     // プログラムIDをPublicKeyに変換
     const programId = new PublicKey(SOLANA_CONSTANTS.PROGRAM_ID);
+    console.log('Program ID:', programId.toString());
     
-    // Anchorフォーマットに合わせたデータバッファの作成
-    // 8バイトのディスクリミネーター (メソッド識別子)
-    const METHOD_DISCRIMINATOR = new Uint8Array([13, 169, 94, 33, 114, 151, 103, 162]); // "accept_task" のsha256ハッシュの先頭8バイト
-    console.log('Method Discriminator:', Array.from(METHOD_DISCRIMINATOR));
+    // Anchorのシリアライズ形式に合わせたデータバッファの作成
+    // 8バイトのメソッド識別子(ディスクリミネーター)
+    // "accept_task" という文字列から生成されるAnchorの標準ディスクリミネーター
+    const methodDiscriminator = new Uint8Array([13, 169, 94, 33, 114, 151, 103, 162]);
     
-    // タスクIDを符号なし64ビット整数として格納 (8バイト)
-    const taskIdBytes = new Uint8Array(8);
-    const taskIdView = new DataView(taskIdBytes.buffer);
-    taskIdView.setBigUint64(0, BigInt(taskId), true); // trueはリトルエンディアン
-    console.log('Task ID bytes:', Array.from(taskIdBytes));
+    // 引数1: recipient (PublicKey)
+    // ドライバーのPublicKeyを渡す
+    const recipientBytes = new Uint8Array(driverPubkey.toBytes());
     
-    // Anchorのシリアライズフォーマットに従って全てのバッファを一つに連結
-    const combinedLength = METHOD_DISCRIMINATOR.length + taskIdBytes.length;
-    const combinedBuffer = new Uint8Array(combinedLength);
+    // 全てのバッファを連結
+    const dataBuffer = new Uint8Array(
+      methodDiscriminator.length + recipientBytes.length
+    );
     
     let offset = 0;
-    combinedBuffer.set(METHOD_DISCRIMINATOR, offset);
-    offset += METHOD_DISCRIMINATOR.length;
-    combinedBuffer.set(taskIdBytes, offset);
+    dataBuffer.set(methodDiscriminator, offset);
+    offset += methodDiscriminator.length;
+    dataBuffer.set(recipientBytes, offset);
     
-    // ブラウザ環境ではBufferが直接利用できないのでUint8Arrayをそのまま使用
-    const data = combinedBuffer;
+    console.log('Data buffer created:', dataBuffer.length);
     
-    // Anchorプログラムが要求するアカウント構造に合わせたインストラクション作成
-    
-    // タスクアカウントのPDAを派生させる
-    const taskSeed = new TextEncoder().encode("task");
-    const taskIdBytesForPDA = new Uint8Array(8);
-    const taskIdViewForPDA = new DataView(taskIdBytesForPDA.buffer);
-    taskIdViewForPDA.setBigUint64(0, BigInt(taskId), true);
+    // タスクアカウントのPDAを生成 (シードは "task" + taskId のバイナリ表現)
+    const taskSeedPrefix = new TextEncoder().encode("task");
+    const taskIdBytes = new Uint8Array(8);
+    const taskIdView = new DataView(taskIdBytes.buffer);
+    taskIdView.setBigUint64(0, BigInt(taskId), true);
     
     const [taskAccountPubkey] = PublicKey.findProgramAddressSync(
-      [taskSeed, taskIdBytesForPDA],
+      [taskSeedPrefix, taskIdBytes],
       programId
     );
     console.log('Task Account PDA:', taskAccountPubkey.toString());
     
-    // 設定アカウントのPDAを派生
-    const configSeed = new TextEncoder().encode("config");
+    // 設定アカウントのPDAを生成
+    const configSeedPrefix = new TextEncoder().encode("config");
     const [configPubkey] = PublicKey.findProgramAddressSync(
-      [configSeed],
+      [configSeedPrefix],
       programId
     );
+    console.log('Config Account PDA:', configPubkey.toString());
     
-    // 管理アクションカウンターのPDAを派生
-    const adminActionSeed = new TextEncoder().encode("admin_action");
+    // 管理アクションカウンターのPDAを生成
+    const adminActionSeedPrefix = new TextEncoder().encode("admin_action");
     const [adminActionCounterPubkey] = PublicKey.findProgramAddressSync(
-      [adminActionSeed],
+      [adminActionSeedPrefix],
       programId
     );
+    console.log('Admin Action Counter PDA:', adminActionCounterPubkey.toString());
     
-    // タスク作成者のウォレットを特定 (実際の実装ではデータベースやプログラムからフェッチする必要があります)
-    // ここでは仮にdriverPubkeyを使用し、実際の使用時に適切なアドレスに置き換えます
-    const consignerWalletPubkey = driverPubkey; // 実際にはタスク作成者の公開鍵
-    
+    // Anchor IDLに基づいたアカウント構造でインストラクションを作成
     const instruction = new TransactionInstruction({
       keys: [
-        { pubkey: taskAccountPubkey, isSigner: false, isWritable: true },         // タスクアカウント
+        { pubkey: taskAccountPubkey, isSigner: false, isWritable: true },         // タスクアカウント (PDA)
         { pubkey: driverPubkey, isSigner: true, isWritable: true },               // 実行者（署名者）
-        { pubkey: driverPubkey, isSigner: false, isWritable: true },              // 受取人アカウント
-        { pubkey: configPubkey, isSigner: false, isWritable: false },             // 設定アカウント
+        { pubkey: driverPubkey, isSigner: false, isWritable: true },              // 受取人アカウント（実行者自身）
+        { pubkey: configPubkey, isSigner: false, isWritable: false },             // プログラム設定
         { pubkey: adminActionCounterPubkey, isSigner: false, isWritable: true },  // 管理アクションカウンター
         { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },  // システムプログラム
       ],
       programId,
-      data,
+      data: dataBuffer
     });
     
-    // トランザクションの作成
+    // トランザクションにインストラクションを追加
     const transaction = new Transaction().add(instruction);
     
     // 最新のブロックハッシュを取得して設定
     const { blockhash } = await connection.getLatestBlockhash();
+    console.log('Using blockhash:', blockhash);
+    
     transaction.recentBlockhash = blockhash;
     transaction.feePayer = driverPubkey;
     
+    console.log('Accept task transaction created successfully');
     return transaction;
   } catch (error) {
     console.error('Error creating acceptTask transaction:', error);
-    throw new Error('Failed to create acceptTask transaction');
+    if (error instanceof Error) {
+      console.error('Stack trace:', error.stack);
+    }
+    throw new Error(`Failed to create acceptTask transaction: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
 // タスク拒否用のトランザクションを作成する
 export async function rejectTaskTransaction(
   commissionerPubkey: PublicKey, // タスク作成者のウォレットアドレス
-  taskId: number,                // 拒否するタスクのID
-  submissionId: number           // 拒否する提出物のID
+  taskId: number                // 拒否するタスクのID
 ): Promise<Transaction> {
   try {
+    console.log(`Creating reject task transaction:
+      Commissioner: ${commissionerPubkey.toString()}
+      Task ID: ${taskId}`);
+    
     // プログラムIDをPublicKeyに変換
     const programId = new PublicKey(SOLANA_CONSTANTS.PROGRAM_ID);
+    console.log('Program ID:', programId.toString());
     
-    // Anchorフォーマットに合わせたデータバッファの作成
-    // 8バイトのディスクリミネーター (メソッド識別子)
-    const METHOD_DISCRIMINATOR = new Uint8Array([102, 29, 22, 156, 33, 145, 230, 89]); // "reject_task" のsha256ハッシュの先頭8バイト
-    console.log('Method Discriminator:', Array.from(METHOD_DISCRIMINATOR));
+    // Anchorのシリアライズ形式に合わせたデータバッファの作成
+    // 8バイトのメソッド識別子(ディスクリミネーター)
+    // "reject_task" という文字列から生成されるAnchorの標準ディスクリミネーター
+    const methodDiscriminator = new Uint8Array([102, 29, 22, 156, 33, 145, 230, 89]);
     
-    // タスクIDを符号なし64ビット整数として格納 (8バイト)
+    // IDLを確認すると引数は不要（空の配列）
+    
+    // 全てのバッファを連結（このケースではディスクリミネーターのみ）
+    const dataBuffer = methodDiscriminator;
+    
+    console.log('Data buffer created:', dataBuffer.length);
+    
+    // タスクアカウントのPDAを生成 (シードは "task" + taskId のバイナリ表現)
+    const taskSeedPrefix = new TextEncoder().encode("task");
     const taskIdBytes = new Uint8Array(8);
     const taskIdView = new DataView(taskIdBytes.buffer);
-    taskIdView.setBigUint64(0, BigInt(taskId), true); // trueはリトルエンディアン
-    console.log('Task ID bytes:', Array.from(taskIdBytes));
+    taskIdView.setBigUint64(0, BigInt(taskId), true);
     
-    // サブミッションIDを符号なし64ビット整数として格納 (8バイト)
-    const submissionIdBytes = new Uint8Array(8);
-    const submissionIdView = new DataView(submissionIdBytes.buffer);
-    submissionIdView.setBigUint64(0, BigInt(submissionId), true); // リトルエンディアン
-    console.log('Submission ID bytes:', Array.from(submissionIdBytes));
+    const [taskAccountPubkey] = PublicKey.findProgramAddressSync(
+      [taskSeedPrefix, taskIdBytes],
+      programId
+    );
+    console.log('Task Account PDA:', taskAccountPubkey.toString());
     
-    // Anchorのシリアライズフォーマットに従って全てのバッファを一つに連結
-    const combinedLength = METHOD_DISCRIMINATOR.length + taskIdBytes.length + submissionIdBytes.length;
-    const combinedBuffer = new Uint8Array(combinedLength);
+    // 設定アカウントのPDAを生成
+    const configSeedPrefix = new TextEncoder().encode("config");
+    const [configPubkey] = PublicKey.findProgramAddressSync(
+      [configSeedPrefix],
+      programId
+    );
+    console.log('Config Account PDA:', configPubkey.toString());
     
-    let offset = 0;
-    combinedBuffer.set(METHOD_DISCRIMINATOR, offset);
-    offset += METHOD_DISCRIMINATOR.length;
-    combinedBuffer.set(taskIdBytes, offset);
-    offset += taskIdBytes.length;
-    combinedBuffer.set(submissionIdBytes, offset);
+    // 管理アクションカウンターのPDAを生成
+    const adminActionSeedPrefix = new TextEncoder().encode("admin_action");
+    const [adminActionCounterPubkey] = PublicKey.findProgramAddressSync(
+      [adminActionSeedPrefix],
+      programId
+    );
+    console.log('Admin Action Counter PDA:', adminActionCounterPubkey.toString());
     
-    // ブラウザ環境ではBufferが直接利用できないのでUint8Arrayをそのまま使用
-    const data = combinedBuffer;
-    
-    // インストラクションの作成 - Anchorプログラムに合わせたフォーマット
+    // Anchor IDLに基づいたアカウント構造でインストラクションを作成
     const instruction = new TransactionInstruction({
       keys: [
-        { pubkey: commissionerPubkey, isSigner: true, isWritable: true }, // タスク作成者
-        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false }, // システムプログラム
+        { pubkey: taskAccountPubkey, isSigner: false, isWritable: true },         // タスクアカウント (PDA)
+        { pubkey: commissionerPubkey, isSigner: true, isWritable: true },         // 委託者（署名者）
+        { pubkey: configPubkey, isSigner: false, isWritable: false },             // プログラム設定
+        { pubkey: adminActionCounterPubkey, isSigner: false, isWritable: true },  // 管理アクションカウンター
+        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },  // システムプログラム
       ],
       programId,
-      data,
+      data: dataBuffer
     });
     
-    // トランザクションの作成
+    // トランザクションにインストラクションを追加
     const transaction = new Transaction().add(instruction);
     
     // 最新のブロックハッシュを取得して設定
     const { blockhash } = await connection.getLatestBlockhash();
+    console.log('Using blockhash:', blockhash);
+    
     transaction.recentBlockhash = blockhash;
     transaction.feePayer = commissionerPubkey;
     
+    console.log('Reject task transaction created successfully');
     return transaction;
   } catch (error) {
     console.error('Error creating rejectTask transaction:', error);
-    throw new Error('Failed to create rejectTask transaction');
+    if (error instanceof Error) {
+      console.error('Stack trace:', error.stack);
+    }
+    throw new Error(`Failed to create rejectTask transaction: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
@@ -347,53 +375,75 @@ export async function reclaimTaskFundsTransaction(
   taskId: number                // 資金を回収するタスクのID
 ): Promise<Transaction> {
   try {
+    console.log(`Creating reclaim task funds transaction:
+      Commissioner: ${commissionerPubkey.toString()}
+      Task ID: ${taskId}`);
+    
     // プログラムIDをPublicKeyに変換
     const programId = new PublicKey(SOLANA_CONSTANTS.PROGRAM_ID);
+    console.log('Program ID:', programId.toString());
     
-    // Anchorフォーマットに合わせたデータバッファの作成
-    // 8バイトのディスクリミネーター (メソッド識別子)
-    const METHOD_DISCRIMINATOR = new Uint8Array([45, 173, 66, 44, 98, 117, 162, 170]); // "reclaim_task_funds" のsha256ハッシュの先頭8バイト
-    console.log('Method Discriminator:', Array.from(METHOD_DISCRIMINATOR));
+    // Anchorのシリアライズ形式に合わせたデータバッファの作成
+    // 8バイトのメソッド識別子(ディスクリミネーター)
+    // "reclaim_task_funds" という文字列から生成されるAnchorの標準ディスクリミネーター
+    const methodDiscriminator = new Uint8Array([45, 173, 66, 44, 98, 117, 162, 170]);
     
-    // タスクIDを符号なし64ビット整数として格納 (8バイト)
+    // IDLを確認すると引数は不要（空の配列）
+    
+    // 全てのバッファを連結（このケースではディスクリミネーターのみ）
+    const dataBuffer = methodDiscriminator;
+    
+    console.log('Data buffer created:', dataBuffer.length);
+    
+    // タスクアカウントのPDAを生成 (シードは "task" + taskId のバイナリ表現)
+    const taskSeedPrefix = new TextEncoder().encode("task");
     const taskIdBytes = new Uint8Array(8);
     const taskIdView = new DataView(taskIdBytes.buffer);
-    taskIdView.setBigUint64(0, BigInt(taskId), true); // trueはリトルエンディアン
-    console.log('Task ID bytes:', Array.from(taskIdBytes));
+    taskIdView.setBigUint64(0, BigInt(taskId), true);
     
-    // Anchorのシリアライズフォーマットに従って全てのバッファを一つに連結
-    const combinedLength = METHOD_DISCRIMINATOR.length + taskIdBytes.length;
-    const combinedBuffer = new Uint8Array(combinedLength);
+    const [taskAccountPubkey] = PublicKey.findProgramAddressSync(
+      [taskSeedPrefix, taskIdBytes],
+      programId
+    );
+    console.log('Task Account PDA:', taskAccountPubkey.toString());
     
-    let offset = 0;
-    combinedBuffer.set(METHOD_DISCRIMINATOR, offset);
-    offset += METHOD_DISCRIMINATOR.length;
-    combinedBuffer.set(taskIdBytes, offset);
+    // 設定アカウントのPDAを生成
+    const configSeedPrefix = new TextEncoder().encode("config");
+    const [configPubkey] = PublicKey.findProgramAddressSync(
+      [configSeedPrefix],
+      programId
+    );
+    console.log('Config Account PDA:', configPubkey.toString());
     
-    // ブラウザ環境ではBufferが直接利用できないのでUint8Arrayをそのまま使用
-    const data = combinedBuffer;
-    
-    // インストラクションの作成 - フォーマットをAnchorプログラムに合わせる
+    // Anchor IDLに基づいたアカウント構造でインストラクションを作成
     const instruction = new TransactionInstruction({
       keys: [
-        { pubkey: commissionerPubkey, isSigner: true, isWritable: true }, // タスク作成者
+        { pubkey: taskAccountPubkey, isSigner: false, isWritable: true },      // タスクアカウント (PDA)
+        { pubkey: commissionerPubkey, isSigner: true, isWritable: true },      // 委託者（署名者）
+        { pubkey: configPubkey, isSigner: false, isWritable: false },          // プログラム設定
         { pubkey: SystemProgram.programId, isSigner: false, isWritable: false }, // システムプログラム
       ],
       programId,
-      data,
+      data: dataBuffer
     });
     
-    // トランザクションの作成
+    // トランザクションにインストラクションを追加
     const transaction = new Transaction().add(instruction);
     
     // 最新のブロックハッシュを取得して設定
     const { blockhash } = await connection.getLatestBlockhash();
+    console.log('Using blockhash:', blockhash);
+    
     transaction.recentBlockhash = blockhash;
     transaction.feePayer = commissionerPubkey;
     
+    console.log('Reclaim task funds transaction created successfully');
     return transaction;
   } catch (error) {
     console.error('Error creating reclaimTaskFunds transaction:', error);
-    throw new Error('Failed to create reclaimTaskFunds transaction');
+    if (error instanceof Error) {
+      console.error('Stack trace:', error.stack);
+    }
+    throw new Error(`Failed to create reclaimTaskFunds transaction: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
