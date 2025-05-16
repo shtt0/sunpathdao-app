@@ -36,6 +36,16 @@ export function WalletProvider({ children }: WalletProviderProps) {
   // Reown AppKitへのアクセスを取得 (App.tsxですでに初期化されています)
   const appKit = useAppKit();
 
+  // Register user in the database
+  const registerUser = async (address: string) => {
+    try {
+      await apiRequest('POST', API_ROUTES.USERS, { walletAddress: address });
+      console.log('User registered successfully with address:', address);
+    } catch (error) {
+      console.error('Error registering user:', error);
+    }
+  };
+
   // Check if wallet is already connected on mount
   useEffect(() => {
     const checkWalletConnection = async () => {
@@ -65,76 +75,49 @@ export function WalletProvider({ children }: WalletProviderProps) {
     checkWalletConnection();
   }, []);
 
-  // Register user in the database
-  const registerUser = async (address: string) => {
-    try {
-      await apiRequest('POST', API_ROUTES.USERS, { walletAddress: address });
-    } catch (error) {
-      console.error('Error registering user:', error);
-    }
-  };
-
-  // Connect wallet using AppKit (supports Email & Social Login) only
+  // Connect wallet using AppKit
   const connectWallet = async () => {
     try {
       setWalletStatus('connecting');
       
-      // AppKitが利用可能かチェック
       if (appKit && typeof appKit.open === 'function') {
-        console.log('Opening Reown AppKit modal for wallet connection');
+        console.log('Opening Reown AppKit modal');
         
-        // ウォレット接続を試みる
-        let response = null;
         try {
-          response = await appKit.open();
+          // ウォレット接続を試みる
+          await appKit.open();
+          
+          // デモ環境用のアドレスを生成
+          const demoAddress = "Demo" + Date.now().toString().slice(-8);
+          
+          // ステートを更新
+          setWalletAddress(demoAddress);
+          setWalletStatus('connected');
+          
+          // ユーザー登録
+          await registerUser(demoAddress);
+          
         } catch (error) {
           console.error('AppKit connection error:', error);
           setWalletStatus('disconnected');
-          return;
         }
-        
-        // 接続成功した場合
-        if (response) {
-          console.log('AppKit connection successful');
-          // デモ用のウォレットアドレスを生成
-          const generatedAddr = "Demo" + Date.now().toString().slice(-8);
-          setWalletAddress(generatedAddr);
-          setWalletStatus('connected');
-          await registerUser(generatedAddr);
-        } else {
-          // キャンセルされた場合
-          console.log('AppKit connection was canceled by user');
-          setWalletStatus('disconnected');
-        }
-        
-        return;
+      } else {
+        console.error('AppKit not available');
+        alert('Wallet connection service is unavailable');
+        setWalletStatus('disconnected');
       }
-      
-      // AppKitが利用できない場合
-      console.error('AppKit not available for wallet connection');
-      alert('Wallet connection service is unavailable. Please try again later.');
-      setWalletStatus('disconnected');
     } catch (error) {
       console.error('Connect error:', error);
       setWalletStatus('disconnected');
-      
-      // エラーメッセージを表示
-      if (error instanceof Error) {
-        alert(`Failed to connect wallet: ${error.message}`);
-      } else {
-        alert('Failed to connect wallet. Please try again.');
-      }
     }
   };
 
   // Disconnect wallet
   const disconnectWallet = () => {
     try {
-      // Try to disconnect using AppKit first - using close() instead of disconnect() since that's what's available
       if (appKit && typeof appKit.close === 'function') {
         appKit.close();
       } else {
-        // Fallback to phantom disconnect for backward compatibility
         const phantom = (window as any).phantom?.solana;
         if (phantom?.isPhantom) {
           phantom.disconnect();
@@ -151,18 +134,13 @@ export function WalletProvider({ children }: WalletProviderProps) {
   // Sign and send transaction
   const signAndSendTransaction = async (transaction: any): Promise<string> => {
     try {
-      // Check if wallet is connected
       if (walletStatus !== 'connected') {
         throw new Error('Wallet not connected');
       }
       
-      // Use AppKit to sign and send transaction if available
       if (appKit) {
-        // AppKit doesn't directly expose signAndSendTransaction in our current setup
-        // This will need to be implemented based on AppKit's API
         throw new Error('Transaction signing not yet implemented with AppKit');
       } else {
-        // If no signing method is available
         throw new Error('No wallet available for signing');
       }
     } catch (error) {
