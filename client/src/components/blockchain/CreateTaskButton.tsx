@@ -1,9 +1,9 @@
 import { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { PublicKey } from '@solana/web3.js';
+import { Connection, PublicKey, Transaction, SystemProgram } from '@solana/web3.js';
 import { useWallet } from '@/contexts/WalletContext';
 import { useToast } from '@/hooks/use-toast';
-import { createTaskTransaction } from '@/lib/solana';
+import { SOLANA_CONSTANTS } from '@/lib/constants';
 
 interface CreateTaskButtonProps {
   taskId: number;
@@ -42,13 +42,30 @@ export default function CreateTaskButton({
       // ウォレットアドレスをPublicKeyに変換
       const walletPublicKey = new PublicKey(walletAddress);
       
-      // タスク作成トランザクションを生成
-      const transaction = await createTaskTransaction(
-        walletPublicKey,
-        taskId,
-        rewardAmount,
-        expiryTimestamp
+      // Solana接続を初期化
+      const connection = new Connection(SOLANA_CONSTANTS.RPC_URL);
+      console.log("RPC接続URL:", SOLANA_CONSTANTS.RPC_URL);
+      
+      // 単純な自己送金トランザクションを作成（テスト用）
+      const transaction = new Transaction();
+      
+      // SystemProgramの転送命令を追加
+      transaction.add(
+        SystemProgram.transfer({
+          fromPubkey: walletPublicKey,
+          toPubkey: walletPublicKey, // 自分自身に送金（テスト用）
+          lamports: 10000 // 0.00001 SOL（最小限のテスト額）
+        })
       );
+      
+      // 最新のブロックハッシュを取得して設定
+      const { blockhash } = await connection.getLatestBlockhash();
+      console.log("使用するブロックハッシュ:", blockhash);
+      
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = walletPublicKey;
+      
+      console.log("トランザクション準備完了:", transaction);
       
       // トランザクションに署名して送信
       const signature = await signAndSendTransaction(transaction);
@@ -57,7 +74,7 @@ export default function CreateTaskButton({
       
       // 成功メッセージを表示
       toast({
-        title: 'タスク作成トランザクションを送信しました',
+        title: 'テスト転送が完了しました',
         description: `トランザクションID: ${signature}`,
       });
       
