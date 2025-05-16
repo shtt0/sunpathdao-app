@@ -88,27 +88,38 @@ export async function confirmTransaction(signature: string): Promise<boolean> {
 export async function createTaskTransaction(
   commissionerPubkey: PublicKey,  // タスク作成者のウォレットアドレス
   taskId: number,               // タスクID（バックエンドで生成されたもの）
-  rewardAmount: number,         // 報酬額（SOL）
-  expiryTimestamp: number       // 期限（UNIXタイムスタンプ）
+  rewardAmount: number,         // 報酬額（lamports）- 注: すでにlamports単位であることに注意
+  expiryTimestamp: number       // 期限（秒数）
 ): Promise<Transaction> {
   try {
+    console.log(`Creating task transaction with details:
+      Commissioner: ${commissionerPubkey.toString()}
+      Task ID: ${taskId}
+      Reward: ${rewardAmount} lamports
+      Expiry duration: ${expiryTimestamp} seconds`);
+    
     // プログラムIDをPublicKeyに変換
     const programId = new PublicKey(SOLANA_CONSTANTS.PROGRAM_ID);
+    console.log('Program ID:', programId.toString());
     
-    // 報酬額をlamportsに変換
-    const rewardLamports = solToLamports(rewardAmount);
-    
-    // データバッファの作成 - スプレッド構文を使わずにバッファを連結
+    // データバッファの作成
     const instructionIndex = new Uint8Array([0]); // 0 = createTask
-    const taskIdBytes = new Uint8Array(new Uint32Array([taskId]).buffer);
+    console.log('Instruction index:', Array.from(instructionIndex));
     
-    // Uint64Arrayがない場合は、BigIntを8バイトのバッファに変換する代わりの方法
+    const taskIdBytes = new Uint8Array(new Uint32Array([taskId]).buffer);
+    console.log('Task ID bytes:', Array.from(taskIdBytes));
+    
+    // 報酬額のバイト列作成（64ビット整数）
+    // 注意: rewardAmountはすでにlamports単位なので変換不要
     const rewardBytes = new Uint8Array(8);
     const view = new DataView(rewardBytes.buffer);
     // DataViewを使って64ビット値を書き込み
-    view.setBigUint64(0, BigInt(rewardLamports), true); // trueはリトルエンディアン
+    view.setBigUint64(0, BigInt(rewardAmount), true); // trueはリトルエンディアン
+    console.log('Reward bytes:', Array.from(rewardBytes));
     
+    // 期限（秒数）
     const expiryBytes = new Uint8Array(new Uint32Array([expiryTimestamp]).buffer);
+    console.log('Expiry bytes:', Array.from(expiryBytes));
     
     // 全てのバッファを一つに連結
     const combinedLength = instructionIndex.length + taskIdBytes.length + rewardBytes.length + expiryBytes.length;
@@ -123,12 +134,15 @@ export async function createTaskTransaction(
     offset += rewardBytes.length;
     combinedBuffer.set(expiryBytes, offset);
     
+    console.log('Combined buffer length:', combinedBuffer.length);
+    
     const data = Buffer.from(combinedBuffer);
     
-    // インストラクションの作成
+    // シンプルなインストラクションの作成
+    console.log('Creating transaction instruction');
     const instruction = new TransactionInstruction({
       keys: [
-        { pubkey: commissionerPubkey, isSigner: true, isWritable: true }, // 送金元（タスク作成者）
+        { pubkey: commissionerPubkey, isSigner: true, isWritable: true }, // タスク作成者
         { pubkey: programId, isSigner: false, isWritable: false },       // プログラム自体
       ],
       programId,
@@ -136,17 +150,33 @@ export async function createTaskTransaction(
     });
     
     // トランザクションの作成
-    const transaction = new Transaction().add(instruction);
+    console.log('Creating transaction');
+    const transaction = new Transaction();
+    transaction.add(instruction);
     
-    // 最新のブロックハッシュを取得して設定
-    const { blockhash } = await connection.getLatestBlockhash();
-    transaction.recentBlockhash = blockhash;
-    transaction.feePayer = commissionerPubkey;
-    
-    return transaction;
+    try {
+      // 最新のブロックハッシュを取得して設定
+      console.log('Getting latest blockhash');
+      const { blockhash } = await connection.getLatestBlockhash();
+      console.log('Blockhash:', blockhash);
+      
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = commissionerPubkey;
+      
+      console.log('Transaction created successfully');
+      return transaction;
+    } catch (blockHashError) {
+      console.error('Error getting blockhash:', blockHashError);
+      throw blockHashError;
+    }
   } catch (error) {
     console.error('Error creating task transaction:', error);
-    throw new Error('Failed to create task transaction');
+    // スタックトレースを含むより詳細なエラーメッセージ
+    if (error instanceof Error) {
+      console.error('Stack trace:', error.stack);
+      throw new Error(`Failed to create task transaction: ${error.message}`);
+    }
+    throw error;
   }
 }
 
