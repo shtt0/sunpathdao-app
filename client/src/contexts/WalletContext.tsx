@@ -178,9 +178,12 @@ export function WalletProvider({ children }: WalletProviderProps) {
         console.log('トランザクションに署名を依頼中...');
         
         // トランザクションをシリアライズ
-        const serializedTransaction = Buffer.from(
-          transaction.serialize({ verifySignatures: false })
-        ).toString('base64');
+        // ブラウザ環境ではBufferではなくUint8Arrayとbtoa関数を使用
+        const serializedTransaction = btoa(
+          String.fromCharCode.apply(null, Array.from(
+            transaction.serialize({ verifySignatures: false })
+          ))
+        );
         
         // トランザクションに署名
         const solanaConnection = connection;

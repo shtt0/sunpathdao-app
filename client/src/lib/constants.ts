@@ -12,7 +12,7 @@ export const SOLANA_CONSTANTS = {
   RPC_URL: process.env.NODE_ENV === 'production' 
     ? 'https://mainnet.helius-rpc.com/?api-key=8af303e8-8551-44c9-b69b-e450b4e00455' // Helius mainnet
     : 'https://devnet.helius-rpc.com/?api-key=8af303e8-8551-44c9-b69b-e450b4e00455', // Helius devnet
-  PROGRAM_ID: process.env.VITE_SOLANA_PROGRAM_ID || '3SUR2BvfpCrUR2pCzqkFuNGyzT2DqHeeF7RBh9KaYmFR', // サンプル値、実際のプログラムIDに置き換え必要
+  PROGRAM_ID: process.env.VITE_SOLANA_PROGRAM_ID || 'Drr2eM6yoGXL2QZHdaFzXzUDDPQarV8acbbYWTBAtNyE', // 正しいプログラムID
   MIN_DEPOSIT_AMOUNT: 0.1, // コミッショナーに必要な最低デポジット量（SOL）
 };
 
