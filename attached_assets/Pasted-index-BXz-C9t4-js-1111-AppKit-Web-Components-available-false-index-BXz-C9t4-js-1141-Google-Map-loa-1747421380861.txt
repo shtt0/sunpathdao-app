@@ -1,0 +1,372 @@
+index-BXz-C9t4.js:1111 AppKit Web Components available: false
+index-BXz-C9t4.js:1141 Google Map loaded successfully
+create-task:1 <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes">
+index-BXz-C9t4.js:1069 User registered successfully with address: AYhSMbtBBct6BVa75UnhF2DJG3JKTVXDFmeGznD1ij74
+index-BXz-C9t4.js:135 Discarding cache for address solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1:AYhSMbtBBct6BVa75UnhF2DJG3JKTVXDFmeGznD1ij74
+index-BXz-C9t4.js:1141 Calculating route from Shibuya station to Harajuku Station
+index-BXz-C9t4.js:1141 Route calculated successfully
+index-BXz-C9t4.js:1141 Route data: {distance: '1.2 km', duration: '5 mins', start_location: {…}, end_location: {…}, polyline: 'eysxEihtsYiASUEo@Ag@?aB@uGAq@Ee@Yk@q@{CSiDUy@OiAQsAOq@GaAIS@sAG{@EuDOoAKYCq@GUKIUo@qBU?}@I[A'}
+index-BXz-C9t4.js:1141 Submitting task with converted data: {title: 'FrontTest01', description: 'FrontTest01FrontTest01', country: 'Japan', city: 'Tokyo', startLocation: 'Shibuya station', …}
+index-BXz-C9t4.js:1141 Creating task transaction with: taskId=1747421146, reward=500000000 lamports, duration=604735 seconds
+index-BXz-C9t4.js:131 Creating task transaction with details:
+      Commissioner: AYhSMbtBBct6BVa75UnhF2DJG3JKTVXDFmeGznD1ij74
+      Task ID: 1747421146
+      Reward: 500000000 lamports
+      Expiry duration: 604735 seconds
+index-BXz-C9t4.js:135 Program ID: Drr2eM6yoGXL2QZHdaFzXzUDDPQarV8acbbYWTBAtNyE
+index-BXz-C9t4.js:135 Instruction index: [0]
+index-BXz-C9t4.js:135 Task ID bytes: (4) [218, 135, 39, 104]
+index-BXz-C9t4.js:135 Reward bytes: (8) [0, 101, 205, 29, 0, 0, 0, 0]
+index-BXz-C9t4.js:135 Expiry bytes: (4) [63, 58, 9, 0]
+index-BXz-C9t4.js:135 Combined buffer length: 17
+index-BXz-C9t4.js:135 Creating transaction instruction
+index-BXz-C9t4.js:135 Creating transaction
+index-BXz-C9t4.js:135 Getting latest blockhash
+index-BXz-C9t4.js:135 Blockhash: 27jd5H92fyULhemVxYeoYV3e2wJx6nG6w4p2i8sjkk53
+index-BXz-C9t4.js:135 Transaction created successfully
+index-BXz-C9t4.js:1069 トランザクション内容: Wr {signatures: Array(0), feePayer: Ve, instructions: Array(1), recentBlockhash: '27jd5H92fyULhemVxYeoYV3e2wJx6nG6w4p2i8sjkk53', lastValidBlockHeight: undefined, …}
+index-BXz-C9t4.js:1069 トランザクションに署名を依頼中...
+index-BXz-C9t4.js:1069 Phantom Walletを使用してトランザクションに署名します
+index-BXz-C9t4.js:1069 Phantom Walletでの署名エラー: Ve: User rejected the request.
+    at #o (chrome-extension://bfnaelmomeimhlpmgjnjophhpkkoljpa/solana.js:3:411375)
+    at async r.signTransaction (chrome-extension://bfnaelmomeimhlpmgjnjophhpkkoljpa/solana.js:3:412658)
+    at async signAndSendTransaction (https://sunpathdao.replit.app/assets/index-BXz-C9t4.js:1069:55695)
+    at async Object.mutationFn (https://sunpathdao.replit.app/assets/index-BXz-C9t4.js:1141:98113)
+signAndSendTransaction @ index-BXz-C9t4.js:1069
+await in signAndSendTransaction
+mutationFn @ index-BXz-C9t4.js:1141
+await in mutationFn
+fn @ index-BXz-C9t4.js:49
+g @ index-BXz-C9t4.js:49
+start @ index-BXz-C9t4.js:49
+execute @ index-BXz-C9t4.js:49
+await in execute
+mutate @ index-BXz-C9t4.js:49
+D @ index-BXz-C9t4.js:1141
+（匿名） @ index-BXz-C9t4.js:1115
+await in （匿名）
+yV @ index-BXz-C9t4.js:38
+wV @ index-BXz-C9t4.js:38
+bV @ index-BXz-C9t4.js:38
+NR @ index-BXz-C9t4.js:38
+v5 @ index-BXz-C9t4.js:38
+（匿名） @ index-BXz-C9t4.js:38
+hk @ index-BXz-C9t4.js:41
+z$ @ index-BXz-C9t4.js:38
+b_ @ index-BXz-C9t4.js:38
+FI @ index-BXz-C9t4.js:38
+DV @ index-BXz-C9t4.js:38
+index-BXz-C9t4.js:1069 トランザクション署名に失敗: Ve: User rejected the request.
+    at #o (chrome-extension://bfnaelmomeimhlpmgjnjophhpkkoljpa/solana.js:3:411375)
+    at async r.signTransaction (chrome-extension://bfnaelmomeimhlpmgjnjophhpkkoljpa/solana.js:3:412658)
+    at async signAndSendTransaction (https://sunpathdao.replit.app/assets/index-BXz-C9t4.js:1069:55695)
+    at async Object.mutationFn (https://sunpathdao.replit.app/assets/index-BXz-C9t4.js:1141:98113)
+signAndSendTransaction @ index-BXz-C9t4.js:1069
+await in signAndSendTransaction
+mutationFn @ index-BXz-C9t4.js:1141
+await in mutationFn
+fn @ index-BXz-C9t4.js:49
+g @ index-BXz-C9t4.js:49
+start @ index-BXz-C9t4.js:49
+execute @ index-BXz-C9t4.js:49
+await in execute
+mutate @ index-BXz-C9t4.js:49
+D @ index-BXz-C9t4.js:1141
+（匿名） @ index-BXz-C9t4.js:1115
+await in （匿名）
+yV @ index-BXz-C9t4.js:38
+wV @ index-BXz-C9t4.js:38
+bV @ index-BXz-C9t4.js:38
+NR @ index-BXz-C9t4.js:38
+v5 @ index-BXz-C9t4.js:38
+（匿名） @ index-BXz-C9t4.js:38
+hk @ index-BXz-C9t4.js:41
+z$ @ index-BXz-C9t4.js:38
+b_ @ index-BXz-C9t4.js:38
+FI @ index-BXz-C9t4.js:38
+DV @ index-BXz-C9t4.js:38
+index-BXz-C9t4.js:1069 トランザクションエラー: Error: トランザクション署名に失敗: User rejected the request.
+    at signAndSendTransaction (index-BXz-C9t4.js:1069:56106)
+    at async Object.mutationFn (index-BXz-C9t4.js:1141:98113)
+signAndSendTransaction @ index-BXz-C9t4.js:1069
+await in signAndSendTransaction
+mutationFn @ index-BXz-C9t4.js:1141
+await in mutationFn
+fn @ index-BXz-C9t4.js:49
+g @ index-BXz-C9t4.js:49
+start @ index-BXz-C9t4.js:49
+execute @ index-BXz-C9t4.js:49
+await in execute
+mutate @ index-BXz-C9t4.js:49
+D @ index-BXz-C9t4.js:1141
+（匿名） @ index-BXz-C9t4.js:1115
+await in （匿名）
+yV @ index-BXz-C9t4.js:38
+wV @ index-BXz-C9t4.js:38
+bV @ index-BXz-C9t4.js:38
+NR @ index-BXz-C9t4.js:38
+v5 @ index-BXz-C9t4.js:38
+（匿名） @ index-BXz-C9t4.js:38
+hk @ index-BXz-C9t4.js:41
+z$ @ index-BXz-C9t4.js:38
+b_ @ index-BXz-C9t4.js:38
+FI @ index-BXz-C9t4.js:38
+DV @ index-BXz-C9t4.js:38
+index-BXz-C9t4.js:1141 Blockchain transaction error: Error: トランザクション署名に失敗: User rejected the request.
+    at signAndSendTransaction (index-BXz-C9t4.js:1069:56106)
+    at async Object.mutationFn (index-BXz-C9t4.js:1141:98113)
+mutationFn @ index-BXz-C9t4.js:1141
+await in mutationFn
+fn @ index-BXz-C9t4.js:49
+g @ index-BXz-C9t4.js:49
+start @ index-BXz-C9t4.js:49
+execute @ index-BXz-C9t4.js:49
+await in execute
+mutate @ index-BXz-C9t4.js:49
+D @ index-BXz-C9t4.js:1141
+（匿名） @ index-BXz-C9t4.js:1115
+await in （匿名）
+yV @ index-BXz-C9t4.js:38
+wV @ index-BXz-C9t4.js:38
+bV @ index-BXz-C9t4.js:38
+NR @ index-BXz-C9t4.js:38
+v5 @ index-BXz-C9t4.js:38
+（匿名） @ index-BXz-C9t4.js:38
+hk @ index-BXz-C9t4.js:41
+z$ @ index-BXz-C9t4.js:38
+b_ @ index-BXz-C9t4.js:38
+FI @ index-BXz-C9t4.js:38
+DV @ index-BXz-C9t4.js:38
+index-BXz-C9t4.js:1141 Error creating task: Error: トランザクション署名に失敗: User rejected the request.
+    at signAndSendTransaction (index-BXz-C9t4.js:1069:56106)
+    at async Object.mutationFn (index-BXz-C9t4.js:1141:98113)
+onError @ index-BXz-C9t4.js:1141
+execute @ index-BXz-C9t4.js:49
+await in execute
+mutate @ index-BXz-C9t4.js:49
+D @ index-BXz-C9t4.js:1141
+（匿名） @ index-BXz-C9t4.js:1115
+await in （匿名）
+yV @ index-BXz-C9t4.js:38
+wV @ index-BXz-C9t4.js:38
+bV @ index-BXz-C9t4.js:38
+NR @ index-BXz-C9t4.js:38
+v5 @ index-BXz-C9t4.js:38
+（匿名） @ index-BXz-C9t4.js:38
+hk @ index-BXz-C9t4.js:41
+z$ @ index-BXz-C9t4.js:38
+b_ @ index-BXz-C9t4.js:38
+FI @ index-BXz-C9t4.js:38
+DV @ index-BXz-C9t4.js:38
+index-BXz-C9t4.js:1141 Error submitting form: Error: トランザクション署名に失敗: User rejected the request.
+    at signAndSendTransaction (index-BXz-C9t4.js:1069:56106)
+    at async Object.mutationFn (index-BXz-C9t4.js:1141:98113)
+D @ index-BXz-C9t4.js:1141
+await in D
+（匿名） @ index-BXz-C9t4.js:1115
+await in （匿名）
+yV @ index-BXz-C9t4.js:38
+wV @ index-BXz-C9t4.js:38
+bV @ index-BXz-C9t4.js:38
+NR @ index-BXz-C9t4.js:38
+v5 @ index-BXz-C9t4.js:38
+（匿名） @ index-BXz-C9t4.js:38
+hk @ index-BXz-C9t4.js:41
+z$ @ index-BXz-C9t4.js:38
+b_ @ index-BXz-C9t4.js:38
+FI @ index-BXz-C9t4.js:38
+DV @ index-BXz-C9t4.js:38
+index-BXz-C9t4.js:1141 Submitting task with converted data: {title: 'FrontTest01', description: 'FrontTest01FrontTest01', country: 'Japan', city: 'Tokyo', startLocation: 'Shibuya station', …}
+index-BXz-C9t4.js:1141 Creating task transaction with: taskId=1747421269, reward=500000000 lamports, duration=604612 seconds
+index-BXz-C9t4.js:131 Creating task transaction with details:
+      Commissioner: AYhSMbtBBct6BVa75UnhF2DJG3JKTVXDFmeGznD1ij74
+      Task ID: 1747421269
+      Reward: 500000000 lamports
+      Expiry duration: 604612 seconds
+index-BXz-C9t4.js:135 Program ID: Drr2eM6yoGXL2QZHdaFzXzUDDPQarV8acbbYWTBAtNyE
+index-BXz-C9t4.js:135 Instruction index: [0]
+index-BXz-C9t4.js:135 Task ID bytes: (4) [85, 136, 39, 104]
+index-BXz-C9t4.js:135 Reward bytes: (8) [0, 101, 205, 29, 0, 0, 0, 0]
+index-BXz-C9t4.js:135 Expiry bytes: (4) [196, 57, 9, 0]
+index-BXz-C9t4.js:135 Combined buffer length: 17
+index-BXz-C9t4.js:135 Creating transaction instruction
+index-BXz-C9t4.js:135 Creating transaction
+index-BXz-C9t4.js:135 Getting latest blockhash
+index-BXz-C9t4.js:135 Blockhash: Hc8bE1rt12S59mjHbmZHc8RzC44at7XNyfQEmxfDmTVf
+index-BXz-C9t4.js:135 Transaction created successfully
+index-BXz-C9t4.js:1069 トランザクション内容: Wr {signatures: Array(0), feePayer: Ve, instructions: Array(1), recentBlockhash: 'Hc8bE1rt12S59mjHbmZHc8RzC44at7XNyfQEmxfDmTVf', lastValidBlockHeight: undefined, …}
+index-BXz-C9t4.js:1069 トランザクションに署名を依頼中...
+index-BXz-C9t4.js:1069 Phantom Walletを使用してトランザクションに署名します
+index-BXz-C9t4.js:1069 Phantom Walletでの署名エラー: r2: Simulation failed. 
+Message: Transaction simulation failed: Attempt to debit an account but found no record of a prior credit.. 
+Logs: 
+[]. 
+Catch the `SendTransactionError` and call `getLogs()` on it for full details.
+    at ih.sendEncodedTransaction (https://sunpathdao.replit.app/assets/index-BXz-C9t4.js:131:1464)
+    at async ih.sendRawTransaction (https://sunpathdao.replit.app/assets/index-BXz-C9t4.js:131:974)
+    at async signAndSendTransaction (https://sunpathdao.replit.app/assets/index-BXz-C9t4.js:1069:55724)
+    at async Object.mutationFn (https://sunpathdao.replit.app/assets/index-BXz-C9t4.js:1141:98113)
+signAndSendTransaction @ index-BXz-C9t4.js:1069
+await in signAndSendTransaction
+mutationFn @ index-BXz-C9t4.js:1141
+await in mutationFn
+fn @ index-BXz-C9t4.js:49
+g @ index-BXz-C9t4.js:49
+start @ index-BXz-C9t4.js:49
+execute @ index-BXz-C9t4.js:49
+await in execute
+mutate @ index-BXz-C9t4.js:49
+D @ index-BXz-C9t4.js:1141
+（匿名） @ index-BXz-C9t4.js:1115
+await in （匿名）
+yV @ index-BXz-C9t4.js:38
+wV @ index-BXz-C9t4.js:38
+bV @ index-BXz-C9t4.js:38
+NR @ index-BXz-C9t4.js:38
+v5 @ index-BXz-C9t4.js:38
+（匿名） @ index-BXz-C9t4.js:38
+hk @ index-BXz-C9t4.js:41
+z$ @ index-BXz-C9t4.js:38
+b_ @ index-BXz-C9t4.js:38
+FI @ index-BXz-C9t4.js:38
+DV @ index-BXz-C9t4.js:38
+index-BXz-C9t4.js:1069 トランザクション署名に失敗: r2: Simulation failed. 
+Message: Transaction simulation failed: Attempt to debit an account but found no record of a prior credit.. 
+Logs: 
+[]. 
+Catch the `SendTransactionError` and call `getLogs()` on it for full details.
+    at ih.sendEncodedTransaction (https://sunpathdao.replit.app/assets/index-BXz-C9t4.js:131:1464)
+    at async ih.sendRawTransaction (https://sunpathdao.replit.app/assets/index-BXz-C9t4.js:131:974)
+    at async signAndSendTransaction (https://sunpathdao.replit.app/assets/index-BXz-C9t4.js:1069:55724)
+    at async Object.mutationFn (https://sunpathdao.replit.app/assets/index-BXz-C9t4.js:1141:98113)
+signAndSendTransaction @ index-BXz-C9t4.js:1069
+await in signAndSendTransaction
+mutationFn @ index-BXz-C9t4.js:1141
+await in mutationFn
+fn @ index-BXz-C9t4.js:49
+g @ index-BXz-C9t4.js:49
+start @ index-BXz-C9t4.js:49
+execute @ index-BXz-C9t4.js:49
+await in execute
+mutate @ index-BXz-C9t4.js:49
+D @ index-BXz-C9t4.js:1141
+（匿名） @ index-BXz-C9t4.js:1115
+await in （匿名）
+yV @ index-BXz-C9t4.js:38
+wV @ index-BXz-C9t4.js:38
+bV @ index-BXz-C9t4.js:38
+NR @ index-BXz-C9t4.js:38
+v5 @ index-BXz-C9t4.js:38
+（匿名） @ index-BXz-C9t4.js:38
+hk @ index-BXz-C9t4.js:41
+z$ @ index-BXz-C9t4.js:38
+b_ @ index-BXz-C9t4.js:38
+FI @ index-BXz-C9t4.js:38
+DV @ index-BXz-C9t4.js:38
+index-BXz-C9t4.js:1069 トランザクションエラー: Error: トランザクション署名に失敗: Simulation failed. 
+Message: Transaction simulation failed: Attempt to debit an account but found no record of a prior credit.. 
+Logs: 
+[]. 
+Catch the `SendTransactionError` and call `getLogs()` on it for full details.
+    at signAndSendTransaction (index-BXz-C9t4.js:1069:56106)
+    at async Object.mutationFn (index-BXz-C9t4.js:1141:98113)
+signAndSendTransaction @ index-BXz-C9t4.js:1069
+await in signAndSendTransaction
+mutationFn @ index-BXz-C9t4.js:1141
+await in mutationFn
+fn @ index-BXz-C9t4.js:49
+g @ index-BXz-C9t4.js:49
+start @ index-BXz-C9t4.js:49
+execute @ index-BXz-C9t4.js:49
+await in execute
+mutate @ index-BXz-C9t4.js:49
+D @ index-BXz-C9t4.js:1141
+（匿名） @ index-BXz-C9t4.js:1115
+await in （匿名）
+yV @ index-BXz-C9t4.js:38
+wV @ index-BXz-C9t4.js:38
+bV @ index-BXz-C9t4.js:38
+NR @ index-BXz-C9t4.js:38
+v5 @ index-BXz-C9t4.js:38
+（匿名） @ index-BXz-C9t4.js:38
+hk @ index-BXz-C9t4.js:41
+z$ @ index-BXz-C9t4.js:38
+b_ @ index-BXz-C9t4.js:38
+FI @ index-BXz-C9t4.js:38
+DV @ index-BXz-C9t4.js:38
+index-BXz-C9t4.js:1141 Blockchain transaction error: Error: トランザクション署名に失敗: Simulation failed. 
+Message: Transaction simulation failed: Attempt to debit an account but found no record of a prior credit.. 
+Logs: 
+[]. 
+Catch the `SendTransactionError` and call `getLogs()` on it for full details.
+    at signAndSendTransaction (index-BXz-C9t4.js:1069:56106)
+    at async Object.mutationFn (index-BXz-C9t4.js:1141:98113)
+mutationFn @ index-BXz-C9t4.js:1141
+await in mutationFn
+fn @ index-BXz-C9t4.js:49
+g @ index-BXz-C9t4.js:49
+start @ index-BXz-C9t4.js:49
+execute @ index-BXz-C9t4.js:49
+await in execute
+mutate @ index-BXz-C9t4.js:49
+D @ index-BXz-C9t4.js:1141
+（匿名） @ index-BXz-C9t4.js:1115
+await in （匿名）
+yV @ index-BXz-C9t4.js:38
+wV @ index-BXz-C9t4.js:38
+bV @ index-BXz-C9t4.js:38
+NR @ index-BXz-C9t4.js:38
+v5 @ index-BXz-C9t4.js:38
+（匿名） @ index-BXz-C9t4.js:38
+hk @ index-BXz-C9t4.js:41
+z$ @ index-BXz-C9t4.js:38
+b_ @ index-BXz-C9t4.js:38
+FI @ index-BXz-C9t4.js:38
+DV @ index-BXz-C9t4.js:38
+index-BXz-C9t4.js:1141 Error creating task: Error: トランザクション署名に失敗: Simulation failed. 
+Message: Transaction simulation failed: Attempt to debit an account but found no record of a prior credit.. 
+Logs: 
+[]. 
+Catch the `SendTransactionError` and call `getLogs()` on it for full details.
+    at signAndSendTransaction (index-BXz-C9t4.js:1069:56106)
+    at async Object.mutationFn (index-BXz-C9t4.js:1141:98113)
+onError @ index-BXz-C9t4.js:1141
+execute @ index-BXz-C9t4.js:49
+await in execute
+mutate @ index-BXz-C9t4.js:49
+D @ index-BXz-C9t4.js:1141
+（匿名） @ index-BXz-C9t4.js:1115
+await in （匿名）
+yV @ index-BXz-C9t4.js:38
+wV @ index-BXz-C9t4.js:38
+bV @ index-BXz-C9t4.js:38
+NR @ index-BXz-C9t4.js:38
+v5 @ index-BXz-C9t4.js:38
+（匿名） @ index-BXz-C9t4.js:38
+hk @ index-BXz-C9t4.js:41
+z$ @ index-BXz-C9t4.js:38
+b_ @ index-BXz-C9t4.js:38
+FI @ index-BXz-C9t4.js:38
+DV @ index-BXz-C9t4.js:38
+index-BXz-C9t4.js:1141 Error submitting form: Error: トランザクション署名に失敗: Simulation failed. 
+Message: Transaction simulation failed: Attempt to debit an account but found no record of a prior credit.. 
+Logs: 
+[]. 
+Catch the `SendTransactionError` and call `getLogs()` on it for full details.
+    at signAndSendTransaction (index-BXz-C9t4.js:1069:56106)
+    at async Object.mutationFn (index-BXz-C9t4.js:1141:98113)
+D @ index-BXz-C9t4.js:1141
+await in D
+（匿名） @ index-BXz-C9t4.js:1115
+await in （匿名）
+yV @ index-BXz-C9t4.js:38
+wV @ index-BXz-C9t4.js:38
+bV @ index-BXz-C9t4.js:38
+NR @ index-BXz-C9t4.js:38
+v5 @ index-BXz-C9t4.js:38
+（匿名） @ index-BXz-C9t4.js:38
+hk @ index-BXz-C9t4.js:41
+z$ @ index-BXz-C9t4.js:38
+b_ @ index-BXz-C9t4.js:38
+FI @ index-BXz-C9t4.js:38
+DV @ index-BXz-C9t4.js:38
