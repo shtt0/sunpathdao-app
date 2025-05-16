@@ -143,7 +143,7 @@ export async function createTaskTransaction(
     const instruction = new TransactionInstruction({
       keys: [
         { pubkey: commissionerPubkey, isSigner: true, isWritable: true }, // タスク作成者
-        { pubkey: programId, isSigner: false, isWritable: false },       // プログラム自体
+        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false }, // システムプログラム
       ],
       programId,
       data,
