@@ -1,0 +1,33 @@
+Failed to load resource: the server responded with a status of 403 ()このエラーを分析
+index-CJSCKlRh.js:135 Error getting blockhash: Error: failed to get recent blockhash: Error: 403 :  {"jsonrpc":"2.0","error":{"code": 403, "message":"Access forbidden"}, "id": "49b765e1-262f-48f6-8efa-ac104173b615" } 
+
+    at ih.getLatestBlockhash (index-CJSCKlRh.js:130:38345)
+    at async Wee (index-CJSCKlRh.js:135:996)
+    at async Object.mutationFn (index-CJSCKlRh.js:1141:97999)
+Wee @ index-CJSCKlRh.js:135このエラーを分析
+index-CJSCKlRh.js:135 Error creating task transaction: Error: failed to get recent blockhash: Error: 403 :  {"jsonrpc":"2.0","error":{"code": 403, "message":"Access forbidden"}, "id": "49b765e1-262f-48f6-8efa-ac104173b615" } 
+
+    at ih.getLatestBlockhash (index-CJSCKlRh.js:130:38345)
+    at async Wee (index-CJSCKlRh.js:135:996)
+    at async Object.mutationFn (index-CJSCKlRh.js:1141:97999)
+Wee @ index-CJSCKlRh.js:135このエラーを分析
+index-CJSCKlRh.js:135 Stack trace: Error: failed to get recent blockhash: Error: 403 :  {"jsonrpc":"2.0","error":{"code": 403, "message":"Access forbidden"}, "id": "49b765e1-262f-48f6-8efa-ac104173b615" } 
+
+    at ih.getLatestBlockhash (https://sunpathdao.replit.app/assets/index-CJSCKlRh.js:130:38345)
+    at async Wee (https://sunpathdao.replit.app/assets/index-CJSCKlRh.js:135:996)
+    at async Object.mutationFn (https://sunpathdao.replit.app/assets/index-CJSCKlRh.js:1141:97999)
+Wee @ index-CJSCKlRh.js:135このエラーを分析
+index-CJSCKlRh.js:1141 Blockchain transaction error: Error: Failed to create task transaction: failed to get recent blockhash: Error: 403 :  {"jsonrpc":"2.0","error":{"code": 403, "message":"Access forbidden"}, "id": "49b765e1-262f-48f6-8efa-ac104173b615" } 
+
+    at Wee (index-CJSCKlRh.js:135:1331)
+    at async Object.mutationFn (index-CJSCKlRh.js:1141:97999)
+mutationFn @ index-CJSCKlRh.js:1141このエラーを分析
+index-CJSCKlRh.js:1141 Error creating task: Error: Failed to create task transaction: failed to get recent blockhash: Error: 403 :  {"jsonrpc":"2.0","error":{"code": 403, "message":"Access forbidden"}, "id": "49b765e1-262f-48f6-8efa-ac104173b615" } 
+
+    at Wee (index-CJSCKlRh.js:135:1331)
+    at async Object.mutationFn (index-CJSCKlRh.js:1141:97999)
+onError @ index-CJSCKlRh.js:1141このエラーを分析
+index-CJSCKlRh.js:1141 Error submitting form: Error: Failed to create task transaction: failed to get recent blockhash: Error: 403 :  {"jsonrpc":"2.0","error":{"code": 403, "message":"Access forbidden"}, "id": "49b765e1-262f-48f6-8efa-ac104173b615" } 
+
+    at Wee (index-CJSCKlRh.js:135:1331)
+    at async Object.mutationFn (index-CJSCKlRh.js:1141:97999)

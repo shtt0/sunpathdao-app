@@ -8,8 +8,10 @@ export const API_ROUTES = {
 // Solana constants
 export const SOLANA_CONSTANTS = {
   NETWORK: process.env.NODE_ENV === 'production' ? 'mainnet-beta' : 'devnet',
+  // ベータRPCエンドポイントはアクセス制限があります
+  // 本番環境ではHelius/Quicknode/Alchemyなどの有料RPCサービスを使用することをお勧めします
   RPC_URL: process.env.NODE_ENV === 'production' 
-    ? 'https://api.mainnet-beta.solana.com' 
+    ? 'https://solana-mainnet.rpc.extrnode.com' // より高い制限のある無料のRPCエンドポイント
     : 'https://api.devnet.solana.com',
   PROGRAM_ID: process.env.VITE_SOLANA_PROGRAM_ID || '3SUR2BvfpCrUR2pCzqkFuNGyzT2DqHeeF7RBh9KaYmFR', // サンプル値、実際のプログラムIDに置き換え必要
   MIN_DEPOSIT_AMOUNT: 0.1, // コミッショナーに必要な最低デポジット量（SOL）
