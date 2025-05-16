@@ -138,11 +138,31 @@ export async function createTaskTransaction(
     // ブラウザ環境ではBufferが直接利用できないのでUint8Arrayをそのまま使用
     const data = combinedBuffer;
     
-    // シンプルなインストラクションの作成
+    // Anchorプログラムが要求するアカウント構造に合わせたインストラクション作成
     console.log('Creating transaction instruction');
+    
+    // タスクアカウントのPDAを派生させる（タスクIDをシードとして使用）
+    // ブラウザ互換: TextEncoderを使用してUint8Arrayに変換
+    const taskSeed = new TextEncoder().encode("task");
+    const [taskAccountPubkey] = PublicKey.findProgramAddressSync(
+      [taskSeed, taskIdBytes],
+      programId
+    );
+    console.log('Task Account PDA:', taskAccountPubkey.toString());
+    
+    // 設定アカウントのPDAを派生
+    const configSeed = new TextEncoder().encode("config");
+    const [configPubkey] = PublicKey.findProgramAddressSync(
+      [configSeed],
+      programId
+    );
+    console.log('Config Account PDA:', configPubkey.toString());
+    
     const instruction = new TransactionInstruction({
       keys: [
-        { pubkey: commissionerPubkey, isSigner: true, isWritable: true }, // タスク作成者
+        { pubkey: taskAccountPubkey, isSigner: false, isWritable: true },    // タスクアカウント
+        { pubkey: commissionerPubkey, isSigner: true, isWritable: true },    // 委託者（署名者）
+        { pubkey: configPubkey, isSigner: false, isWritable: false },        // 設定アカウント
         { pubkey: SystemProgram.programId, isSigner: false, isWritable: false }, // システムプログラム
       ],
       programId,
@@ -212,11 +232,46 @@ export async function acceptTaskTransaction(
     // ブラウザ環境ではBufferが直接利用できないのでUint8Arrayをそのまま使用
     const data = combinedBuffer;
     
-    // インストラクションの作成 - Anchorプログラムに合わせたフォーマット
+    // Anchorプログラムが要求するアカウント構造に合わせたインストラクション作成
+    
+    // タスクアカウントのPDAを派生させる
+    const taskSeed = new TextEncoder().encode("task");
+    const taskIdBytesForPDA = new Uint8Array(8);
+    const taskIdViewForPDA = new DataView(taskIdBytesForPDA.buffer);
+    taskIdViewForPDA.setBigUint64(0, BigInt(taskId), true);
+    
+    const [taskAccountPubkey] = PublicKey.findProgramAddressSync(
+      [taskSeed, taskIdBytesForPDA],
+      programId
+    );
+    console.log('Task Account PDA:', taskAccountPubkey.toString());
+    
+    // 設定アカウントのPDAを派生
+    const configSeed = new TextEncoder().encode("config");
+    const [configPubkey] = PublicKey.findProgramAddressSync(
+      [configSeed],
+      programId
+    );
+    
+    // 管理アクションカウンターのPDAを派生
+    const adminActionSeed = new TextEncoder().encode("admin_action");
+    const [adminActionCounterPubkey] = PublicKey.findProgramAddressSync(
+      [adminActionSeed],
+      programId
+    );
+    
+    // タスク作成者のウォレットを特定 (実際の実装ではデータベースやプログラムからフェッチする必要があります)
+    // ここでは仮にdriverPubkeyを使用し、実際の使用時に適切なアドレスに置き換えます
+    const consignerWalletPubkey = driverPubkey; // 実際にはタスク作成者の公開鍵
+    
     const instruction = new TransactionInstruction({
       keys: [
-        { pubkey: driverPubkey, isSigner: true, isWritable: true }, // タスク実行者
-        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false }, // システムプログラム
+        { pubkey: taskAccountPubkey, isSigner: false, isWritable: true },         // タスクアカウント
+        { pubkey: driverPubkey, isSigner: true, isWritable: true },               // 実行者（署名者）
+        { pubkey: driverPubkey, isSigner: false, isWritable: true },              // 受取人アカウント
+        { pubkey: configPubkey, isSigner: false, isWritable: false },             // 設定アカウント
+        { pubkey: adminActionCounterPubkey, isSigner: false, isWritable: true },  // 管理アクションカウンター
+        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },  // システムプログラム
       ],
       programId,
       data,
