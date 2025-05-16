@@ -261,13 +261,20 @@ export async function reclaimTaskFundsTransaction(
     // プログラムIDをPublicKeyに変換
     const programId = new PublicKey(SOLANA_CONSTANTS.PROGRAM_ID);
     
-    // データバッファの作成
-    const data = Buffer.from(
-      Uint8Array.of(
-        3, // インストラクションインデックス: 3 = reclaimTaskFunds
-        ...new Uint8Array(new Uint32Array([taskId]).buffer) // タスクID
-      )
-    );
+    // データバッファの作成 - スプレッド構文を使わずにバッファを連結
+    const instructionIndex = new Uint8Array([3]); // 3 = reclaimTaskFunds
+    const taskIdBytes = new Uint8Array(new Uint32Array([taskId]).buffer);
+    
+    // 全てのバッファを一つに連結
+    const combinedLength = instructionIndex.length + taskIdBytes.length;
+    const combinedBuffer = new Uint8Array(combinedLength);
+    
+    let offset = 0;
+    combinedBuffer.set(instructionIndex, offset);
+    offset += instructionIndex.length;
+    combinedBuffer.set(taskIdBytes, offset);
+    
+    const data = Buffer.from(combinedBuffer);
     
     // インストラクションの作成
     const instruction = new TransactionInstruction({

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Connection, PublicKey } from '@solana/web3.js';
+import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { WalletStatus } from '@shared/types';
 import { apiRequest } from '@/lib/queryClient';
 import { API_ROUTES } from '@/lib/constants';
