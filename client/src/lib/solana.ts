@@ -97,31 +97,36 @@ export async function createTaskTransaction(
     const programId = new PublicKey(SOLANA_CONSTANTS.PROGRAM_ID);
     console.log('Program ID:', programId.toString());
     
-    // データバッファの作成
-    const instructionIndex = new Uint8Array([0]); // 0 = createTask
-    console.log('Instruction index:', Array.from(instructionIndex));
+    // Anchorフォーマットに合わせたデータバッファの作成
+    // 8バイトのディスクリミネーター (メソッド識別子)
+    const METHOD_DISCRIMINATOR = new Uint8Array([121, 223, 53, 53, 150, 214, 191, 179]); // "create_task" のsha256ハッシュの先頭8バイト
+    console.log('Method Discriminator:', Array.from(METHOD_DISCRIMINATOR));
     
-    const taskIdBytes = new Uint8Array(new Uint32Array([taskId]).buffer);
+    // タスクIDを符号なし64ビット整数として格納 (8バイト)
+    const taskIdBytes = new Uint8Array(8);
+    const taskIdView = new DataView(taskIdBytes.buffer);
+    taskIdView.setBigUint64(0, BigInt(taskId), true); // trueはリトルエンディアン
     console.log('Task ID bytes:', Array.from(taskIdBytes));
     
-    // 報酬額のバイト列作成（64ビット整数）
+    // 報酬額のバイト列作成 (8バイト)
     const rewardBytes = new Uint8Array(8);
-    const view = new DataView(rewardBytes.buffer);
-    // DataViewを使って64ビット値を書き込み
-    view.setBigUint64(0, BigInt(rewardAmount), true); // trueはリトルエンディアン
+    const rewardView = new DataView(rewardBytes.buffer);
+    rewardView.setBigUint64(0, BigInt(rewardAmount), true); // リトルエンディアン
     console.log('Reward bytes:', Array.from(rewardBytes));
     
-    // 期限（秒数）
-    const expiryBytes = new Uint8Array(new Uint32Array([expiryTimestamp]).buffer);
+    // 期限（秒数） (8バイト)
+    const expiryBytes = new Uint8Array(8);
+    const expiryView = new DataView(expiryBytes.buffer);
+    expiryView.setBigUint64(0, BigInt(expiryTimestamp), true); // リトルエンディアン
     console.log('Expiry bytes:', Array.from(expiryBytes));
     
-    // 全てのバッファを一つに連結
-    const combinedLength = instructionIndex.length + taskIdBytes.length + rewardBytes.length + expiryBytes.length;
+    // Anchorのシリアライズフォーマットに従って全てのバッファを一つに連結
+    const combinedLength = METHOD_DISCRIMINATOR.length + taskIdBytes.length + rewardBytes.length + expiryBytes.length;
     const combinedBuffer = new Uint8Array(combinedLength);
     
     let offset = 0;
-    combinedBuffer.set(instructionIndex, offset);
-    offset += instructionIndex.length;
+    combinedBuffer.set(METHOD_DISCRIMINATOR, offset);
+    offset += METHOD_DISCRIMINATOR.length;
     combinedBuffer.set(taskIdBytes, offset);
     offset += taskIdBytes.length;
     combinedBuffer.set(rewardBytes, offset);
@@ -184,27 +189,34 @@ export async function acceptTaskTransaction(
     // プログラムIDをPublicKeyに変換
     const programId = new PublicKey(SOLANA_CONSTANTS.PROGRAM_ID);
     
-    // データバッファの作成
-    const instructionIndex = new Uint8Array([1]); // 1 = acceptTask
-    const taskIdBytes = new Uint8Array(new Uint32Array([taskId]).buffer);
+    // Anchorフォーマットに合わせたデータバッファの作成
+    // 8バイトのディスクリミネーター (メソッド識別子)
+    const METHOD_DISCRIMINATOR = new Uint8Array([13, 169, 94, 33, 114, 151, 103, 162]); // "accept_task" のsha256ハッシュの先頭8バイト
+    console.log('Method Discriminator:', Array.from(METHOD_DISCRIMINATOR));
     
-    // 全てのバッファを一つに連結
-    const combinedLength = instructionIndex.length + taskIdBytes.length;
+    // タスクIDを符号なし64ビット整数として格納 (8バイト)
+    const taskIdBytes = new Uint8Array(8);
+    const taskIdView = new DataView(taskIdBytes.buffer);
+    taskIdView.setBigUint64(0, BigInt(taskId), true); // trueはリトルエンディアン
+    console.log('Task ID bytes:', Array.from(taskIdBytes));
+    
+    // Anchorのシリアライズフォーマットに従って全てのバッファを一つに連結
+    const combinedLength = METHOD_DISCRIMINATOR.length + taskIdBytes.length;
     const combinedBuffer = new Uint8Array(combinedLength);
     
     let offset = 0;
-    combinedBuffer.set(instructionIndex, offset);
-    offset += instructionIndex.length;
+    combinedBuffer.set(METHOD_DISCRIMINATOR, offset);
+    offset += METHOD_DISCRIMINATOR.length;
     combinedBuffer.set(taskIdBytes, offset);
     
     // ブラウザ環境ではBufferが直接利用できないのでUint8Arrayをそのまま使用
     const data = combinedBuffer;
     
-    // インストラクションの作成
+    // インストラクションの作成 - Anchorプログラムに合わせたフォーマット
     const instruction = new TransactionInstruction({
       keys: [
-        { pubkey: driverPubkey, isSigner: true, isWritable: false }, // タスク実行者
-        { pubkey: programId, isSigner: false, isWritable: false },  // プログラム自体
+        { pubkey: driverPubkey, isSigner: true, isWritable: true }, // タスク実行者
+        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false }, // システムプログラム
       ],
       programId,
       data,
@@ -235,18 +247,30 @@ export async function rejectTaskTransaction(
     // プログラムIDをPublicKeyに変換
     const programId = new PublicKey(SOLANA_CONSTANTS.PROGRAM_ID);
     
-    // データバッファの作成
-    const instructionIndex = new Uint8Array([2]); // 2 = rejectTask
-    const taskIdBytes = new Uint8Array(new Uint32Array([taskId]).buffer);
-    const submissionIdBytes = new Uint8Array(new Uint32Array([submissionId]).buffer);
+    // Anchorフォーマットに合わせたデータバッファの作成
+    // 8バイトのディスクリミネーター (メソッド識別子)
+    const METHOD_DISCRIMINATOR = new Uint8Array([102, 29, 22, 156, 33, 145, 230, 89]); // "reject_task" のsha256ハッシュの先頭8バイト
+    console.log('Method Discriminator:', Array.from(METHOD_DISCRIMINATOR));
     
-    // 全てのバッファを一つに連結
-    const combinedLength = instructionIndex.length + taskIdBytes.length + submissionIdBytes.length;
+    // タスクIDを符号なし64ビット整数として格納 (8バイト)
+    const taskIdBytes = new Uint8Array(8);
+    const taskIdView = new DataView(taskIdBytes.buffer);
+    taskIdView.setBigUint64(0, BigInt(taskId), true); // trueはリトルエンディアン
+    console.log('Task ID bytes:', Array.from(taskIdBytes));
+    
+    // サブミッションIDを符号なし64ビット整数として格納 (8バイト)
+    const submissionIdBytes = new Uint8Array(8);
+    const submissionIdView = new DataView(submissionIdBytes.buffer);
+    submissionIdView.setBigUint64(0, BigInt(submissionId), true); // リトルエンディアン
+    console.log('Submission ID bytes:', Array.from(submissionIdBytes));
+    
+    // Anchorのシリアライズフォーマットに従って全てのバッファを一つに連結
+    const combinedLength = METHOD_DISCRIMINATOR.length + taskIdBytes.length + submissionIdBytes.length;
     const combinedBuffer = new Uint8Array(combinedLength);
     
     let offset = 0;
-    combinedBuffer.set(instructionIndex, offset);
-    offset += instructionIndex.length;
+    combinedBuffer.set(METHOD_DISCRIMINATOR, offset);
+    offset += METHOD_DISCRIMINATOR.length;
     combinedBuffer.set(taskIdBytes, offset);
     offset += taskIdBytes.length;
     combinedBuffer.set(submissionIdBytes, offset);
@@ -254,11 +278,11 @@ export async function rejectTaskTransaction(
     // ブラウザ環境ではBufferが直接利用できないのでUint8Arrayをそのまま使用
     const data = combinedBuffer;
     
-    // インストラクションの作成
+    // インストラクションの作成 - Anchorプログラムに合わせたフォーマット
     const instruction = new TransactionInstruction({
       keys: [
-        { pubkey: commissionerPubkey, isSigner: true, isWritable: false }, // タスク作成者
-        { pubkey: programId, isSigner: false, isWritable: false },        // プログラム自体
+        { pubkey: commissionerPubkey, isSigner: true, isWritable: true }, // タスク作成者
+        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false }, // システムプログラム
       ],
       programId,
       data,
@@ -288,27 +312,34 @@ export async function reclaimTaskFundsTransaction(
     // プログラムIDをPublicKeyに変換
     const programId = new PublicKey(SOLANA_CONSTANTS.PROGRAM_ID);
     
-    // データバッファの作成
-    const instructionIndex = new Uint8Array([3]); // 3 = reclaimTaskFunds
-    const taskIdBytes = new Uint8Array(new Uint32Array([taskId]).buffer);
+    // Anchorフォーマットに合わせたデータバッファの作成
+    // 8バイトのディスクリミネーター (メソッド識別子)
+    const METHOD_DISCRIMINATOR = new Uint8Array([45, 173, 66, 44, 98, 117, 162, 170]); // "reclaim_task_funds" のsha256ハッシュの先頭8バイト
+    console.log('Method Discriminator:', Array.from(METHOD_DISCRIMINATOR));
     
-    // 全てのバッファを一つに連結
-    const combinedLength = instructionIndex.length + taskIdBytes.length;
+    // タスクIDを符号なし64ビット整数として格納 (8バイト)
+    const taskIdBytes = new Uint8Array(8);
+    const taskIdView = new DataView(taskIdBytes.buffer);
+    taskIdView.setBigUint64(0, BigInt(taskId), true); // trueはリトルエンディアン
+    console.log('Task ID bytes:', Array.from(taskIdBytes));
+    
+    // Anchorのシリアライズフォーマットに従って全てのバッファを一つに連結
+    const combinedLength = METHOD_DISCRIMINATOR.length + taskIdBytes.length;
     const combinedBuffer = new Uint8Array(combinedLength);
     
     let offset = 0;
-    combinedBuffer.set(instructionIndex, offset);
-    offset += instructionIndex.length;
+    combinedBuffer.set(METHOD_DISCRIMINATOR, offset);
+    offset += METHOD_DISCRIMINATOR.length;
     combinedBuffer.set(taskIdBytes, offset);
     
     // ブラウザ環境ではBufferが直接利用できないのでUint8Arrayをそのまま使用
     const data = combinedBuffer;
     
-    // インストラクションの作成
+    // インストラクションの作成 - フォーマットをAnchorプログラムに合わせる
     const instruction = new TransactionInstruction({
       keys: [
         { pubkey: commissionerPubkey, isSigner: true, isWritable: true }, // タスク作成者
-        { pubkey: programId, isSigner: false, isWritable: false },       // プログラム自体
+        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false }, // システムプログラム
       ],
       programId,
       data,
