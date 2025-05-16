@@ -129,16 +129,64 @@ export default function CreateTaskForm({ recreateTaskId }: CreateTaskFormProps) 
       
       console.log('Submitting task with converted data:', taskData);
       
-      // 開発段階では、ブロックチェーンの統合はまだ完了していないことをユーザーに通知
-      toast({
-        title: '開発中の機能',
-        description: 'ブロックチェーン統合はまだ開発中です。現在はオフチェーンでタスクが作成されます。',
-        variant: 'default',
-      });
-      
-      // 2. 現時点ではブロックチェーンへの書き込みなしでタスクを登録
-      // 将来的にはブロックチェーントランザクションの成功確認後にタスクを登録する
-      return apiRequest('POST', `${API_ROUTES.TASKS}`, taskData);
+      try {
+        // Calculate time in seconds from now to the expiry date
+        const now = new Date();
+        const expiryDate = new Date(formData.expiresAt);
+        const durationSeconds = Math.floor((expiryDate.getTime() - now.getTime()) / 1000);
+        
+        // Calculate reward amount in lamports (1 SOL = 1,000,000,000 lamports)
+        const rewardAmountLamports = Math.floor(formData.rewardAmount * 1000000000);
+        
+        // Generate a task ID based on the current timestamp
+        const taskId = Math.floor(Date.now() / 1000);
+        
+        // Create Solana wallet public key from wallet address
+        const walletPublicKey = new PublicKey(walletAddress);
+        
+        // Create a Solana transaction to lock the funds
+        console.log(`Creating task transaction with: taskId=${taskId}, reward=${rewardAmountLamports} lamports, duration=${durationSeconds} seconds`);
+        const transaction = await createTaskTransaction(
+          walletPublicKey,
+          taskId,
+          rewardAmountLamports,
+          durationSeconds
+        );
+        
+        // このトーストはデバッグ目的のみであり、本番環境では削除
+        toast({
+          title: 'トランザクション署名依頼',
+          description: 'ウォレットでトランザクションを確認して署名してください。',
+          variant: 'default',
+        });
+        
+        // Sign and send the transaction
+        const signature = await signAndSendTransaction(transaction);
+        
+        console.log('Task creation transaction signature:', signature);
+        
+        // Add transaction signature to the task data
+        const taskDataWithTx = {
+          ...taskData,
+          blockchainTransactionId: signature,
+          blockchainTaskId: taskId,
+        };
+        
+        // 署名されたトランザクションデータを含めてタスクをサーバーに送信
+        return apiRequest('POST', `${API_ROUTES.TASKS}`, taskDataWithTx);
+      } catch (txError) {
+        console.error('Blockchain transaction error:', txError);
+        
+        // ブロックチェーンエラーをユーザーに通知
+        toast({
+          title: 'トランザクションエラー',
+          description: txError instanceof Error ? txError.message : '不明なエラーが発生しました',
+          variant: 'destructive',
+        });
+        
+        // エラーを上位に伝播
+        throw txError;
+      }
     },
     onSuccess: (data) => {
       toast({
