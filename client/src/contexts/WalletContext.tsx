@@ -143,12 +143,14 @@ export function WalletProvider({ children }: WalletProviderProps) {
       // 本番環境では、AppKitを使って実際にトランザクションに署名して送信する必要があります
       console.log('トランザクション内容:', transaction);
       
-      if (appKit && typeof appKit.signAndSendTransaction === 'function') {
+      // AppKitがサポートする場合は、AppKitを使ってトランザクションを送信
+      // 注: 現在のReown AppKit実装ではこのメソッドが直接提供されていない可能性があります
+      // そのため、このブロックは実行されず、常にモック署名が使用される可能性があります
+      if (appKit && (appKit as any).signAndSendTransaction && 
+          typeof (appKit as any).signAndSendTransaction === 'function') {
         try {
           // AppKitを使ってトランザクションを送信（実際の実装はReown AppKitに依存）
-          // 現在の実装では、このメソッドが存在しないか、別の形式である可能性があるため、
-          // エラーハンドリングを追加しています
-          const signature = await appKit.signAndSendTransaction(transaction);
+          const signature = await (appKit as any).signAndSendTransaction(transaction);
           return typeof signature === 'string' ? signature : 'transaction-hash-' + Date.now().toString();
         } catch (signError) {
           console.error('AppKitでのトランザクション署名に失敗:', signError);
