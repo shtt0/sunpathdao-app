@@ -107,7 +107,7 @@ export default function CreateTaskButton({
       disabled={isLoading || !walletAddress}
       className={className}
     >
-      {isLoading ? 'タスク作成中...' : 'タスクを作成'}
+      {isLoading ? '転送処理中...' : 'テスト転送を実行'}
     </Button>
   );
 }
