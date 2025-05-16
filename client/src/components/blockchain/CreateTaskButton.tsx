@@ -1,9 +1,9 @@
 import { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Connection, PublicKey, Transaction, SystemProgram } from '@solana/web3.js';
+import { PublicKey } from '@solana/web3.js';
 import { useWallet } from '@/contexts/WalletContext';
 import { useToast } from '@/hooks/use-toast';
-import { SOLANA_CONSTANTS } from '@/lib/constants';
+import { createTaskTransaction } from '@/lib/solana';
 
 interface CreateTaskButtonProps {
   taskId: number;
@@ -42,30 +42,27 @@ export default function CreateTaskButton({
       // ウォレットアドレスをPublicKeyに変換
       const walletPublicKey = new PublicKey(walletAddress);
       
-      // Solana接続を初期化
-      const connection = new Connection(SOLANA_CONSTANTS.RPC_URL);
-      console.log("RPC接続URL:", SOLANA_CONSTANTS.RPC_URL);
+      // タスク作成トランザクションを生成
+      console.log(`タスク作成トランザクション準備開始:
+        タスクID: ${taskId}
+        報酬: ${rewardAmount} lamports
+        期限: ${expiryTimestamp} (秒単位のタイムスタンプ)
+      `);
       
-      // 単純な自己送金トランザクションを作成（テスト用）
-      const transaction = new Transaction();
+      // 期限を秒単位の期間に変換
+      const now = Math.floor(Date.now() / 1000);
+      const durationSeconds = Math.floor(new Date(expiryTimestamp).getTime() / 1000) - now;
       
-      // SystemProgramの転送命令を追加
-      transaction.add(
-        SystemProgram.transfer({
-          fromPubkey: walletPublicKey,
-          toPubkey: walletPublicKey, // 自分自身に送金（テスト用）
-          lamports: 10000 // 0.00001 SOL（最小限のテスト額）
-        })
+      console.log(`現在のタイムスタンプ: ${now}`);
+      console.log(`期限までの残り秒数: ${durationSeconds}`);
+      
+      // タスク作成トランザクションを生成
+      const transaction = await createTaskTransaction(
+        walletPublicKey,
+        taskId,
+        rewardAmount,
+        durationSeconds
       );
-      
-      // 最新のブロックハッシュを取得して設定
-      const { blockhash } = await connection.getLatestBlockhash();
-      console.log("使用するブロックハッシュ:", blockhash);
-      
-      transaction.recentBlockhash = blockhash;
-      transaction.feePayer = walletPublicKey;
-      
-      console.log("トランザクション準備完了:", transaction);
       
       // トランザクションに署名して送信
       const signature = await signAndSendTransaction(transaction);
@@ -74,7 +71,7 @@ export default function CreateTaskButton({
       
       // 成功メッセージを表示
       toast({
-        title: 'テスト転送が完了しました',
+        title: 'タスク作成トランザクションを送信しました',
         description: `トランザクションID: ${signature}`,
       });
       
@@ -107,7 +104,7 @@ export default function CreateTaskButton({
       disabled={isLoading || !walletAddress}
       className={className}
     >
-      {isLoading ? '転送処理中...' : 'テスト転送を実行'}
+      {isLoading ? 'タスク作成中...' : 'タスクを作成'}
     </Button>
   );
 }

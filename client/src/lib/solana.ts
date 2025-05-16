@@ -84,119 +84,102 @@ export async function createTaskTransaction(
   commissionerPubkey: PublicKey,  // タスク作成者のウォレットアドレス
   taskId: number,               // タスクID（バックエンドで生成されたもの）
   rewardAmount: number,         // 報酬額（lamports）- 注: すでにlamports単位であることに注意
-  expiryTimestamp: number       // 期限（秒数）
+  durationSeconds: number       // 期限（秒数）
 ): Promise<Transaction> {
   try {
     console.log(`Creating task transaction with details:
       Commissioner: ${commissionerPubkey.toString()}
       Task ID: ${taskId}
       Reward: ${rewardAmount} lamports
-      Expiry duration: ${expiryTimestamp} seconds`);
+      Duration: ${durationSeconds} seconds`);
     
     // プログラムIDをPublicKeyに変換
     const programId = new PublicKey(SOLANA_CONSTANTS.PROGRAM_ID);
     console.log('Program ID:', programId.toString());
     
-    // Anchorフォーマットに合わせたデータバッファの作成
-    // 8バイトのディスクリミネーター (メソッド識別子)
-    const METHOD_DISCRIMINATOR = new Uint8Array([121, 223, 53, 53, 150, 214, 191, 179]); // "create_task" のsha256ハッシュの先頭8バイト
-    console.log('Method Discriminator:', Array.from(METHOD_DISCRIMINATOR));
+    // Anchorのシリアライズ形式に合わせたデータバッファの作成
+    // 8バイトのメソッド識別子(ディスクリミネーター)
+    // "create_task" という文字列から生成されるAnchorの標準ディスクリミネーター
+    const methodDiscriminator = new Uint8Array([162, 118, 124, 113, 114, 191, 113, 191]);
     
-    // タスクIDを符号なし64ビット整数として格納 (8バイト)
+    // 引数をバイト配列に変換
+    // taskId (u64)
     const taskIdBytes = new Uint8Array(8);
     const taskIdView = new DataView(taskIdBytes.buffer);
-    taskIdView.setBigUint64(0, BigInt(taskId), true); // trueはリトルエンディアン
-    console.log('Task ID bytes:', Array.from(taskIdBytes));
+    taskIdView.setBigUint64(0, BigInt(taskId), true); // リトルエンディアン
     
-    // 報酬額のバイト列作成 (8バイト)
+    // rewardAmount (u64)
     const rewardBytes = new Uint8Array(8);
     const rewardView = new DataView(rewardBytes.buffer);
-    rewardView.setBigUint64(0, BigInt(rewardAmount), true); // リトルエンディアン
-    console.log('Reward bytes:', Array.from(rewardBytes));
+    rewardView.setBigUint64(0, BigInt(rewardAmount), true);
     
-    // 期限（秒数） (8バイト)
-    const expiryBytes = new Uint8Array(8);
-    const expiryView = new DataView(expiryBytes.buffer);
-    expiryView.setBigUint64(0, BigInt(expiryTimestamp), true); // リトルエンディアン
-    console.log('Expiry bytes:', Array.from(expiryBytes));
+    // durationSeconds (i64)
+    const durationBytes = new Uint8Array(8);
+    const durationView = new DataView(durationBytes.buffer);
+    durationView.setBigInt64(0, BigInt(durationSeconds), true);
     
-    // Anchorのシリアライズフォーマットに従って全てのバッファを一つに連結
-    const combinedLength = METHOD_DISCRIMINATOR.length + taskIdBytes.length + rewardBytes.length + expiryBytes.length;
-    const combinedBuffer = new Uint8Array(combinedLength);
+    // 全てのバッファを連結
+    const dataBuffer = new Uint8Array(
+      methodDiscriminator.length + taskIdBytes.length + rewardBytes.length + durationBytes.length
+    );
     
     let offset = 0;
-    combinedBuffer.set(METHOD_DISCRIMINATOR, offset);
-    offset += METHOD_DISCRIMINATOR.length;
-    combinedBuffer.set(taskIdBytes, offset);
+    dataBuffer.set(methodDiscriminator, offset);
+    offset += methodDiscriminator.length;
+    dataBuffer.set(taskIdBytes, offset);
     offset += taskIdBytes.length;
-    combinedBuffer.set(rewardBytes, offset);
+    dataBuffer.set(rewardBytes, offset);
     offset += rewardBytes.length;
-    combinedBuffer.set(expiryBytes, offset);
+    dataBuffer.set(durationBytes, offset);
     
-    console.log('Combined buffer length:', combinedBuffer.length);
+    console.log('Data buffer created:', dataBuffer.length);
     
-    // ブラウザ環境ではBufferが直接利用できないのでUint8Arrayをそのまま使用
-    const data = combinedBuffer;
-    
-    // Anchorプログラムが要求するアカウント構造に合わせたインストラクション作成
-    console.log('Creating transaction instruction');
-    
-    // タスクアカウントのPDAを派生させる（タスクIDをシードとして使用）
-    // ブラウザ互換: TextEncoderを使用してUint8Arrayに変換
-    const taskSeed = new TextEncoder().encode("task");
+    // タスクアカウントのPDAを生成 (シードは "task" + taskId のバイナリ表現)
+    const taskSeedPrefix = new TextEncoder().encode("task");
     const [taskAccountPubkey] = PublicKey.findProgramAddressSync(
-      [taskSeed, taskIdBytes],
+      [taskSeedPrefix, new Uint8Array(new TextEncoder().encode(taskId.toString()))],
       programId
     );
     console.log('Task Account PDA:', taskAccountPubkey.toString());
     
-    // 設定アカウントのPDAを派生
-    const configSeed = new TextEncoder().encode("config");
+    // 設定アカウントのPDAを生成
+    const configSeedPrefix = new TextEncoder().encode("config");
     const [configPubkey] = PublicKey.findProgramAddressSync(
-      [configSeed],
+      [configSeedPrefix],
       programId
     );
     console.log('Config Account PDA:', configPubkey.toString());
     
+    // Anchor IDLに基づいたアカウント構造でインストラクションを作成
     const instruction = new TransactionInstruction({
       keys: [
-        { pubkey: taskAccountPubkey, isSigner: false, isWritable: true },    // タスクアカウント
-        { pubkey: commissionerPubkey, isSigner: true, isWritable: true },    // 委託者（署名者）
-        { pubkey: configPubkey, isSigner: false, isWritable: false },        // 設定アカウント
+        { pubkey: taskAccountPubkey, isSigner: false, isWritable: true },    // タスクアカウント (PDA)
+        { pubkey: commissionerPubkey, isSigner: true, isWritable: true },    // 委託者 (署名者)
+        { pubkey: configPubkey, isSigner: false, isWritable: false },        // プログラム設定
         { pubkey: SystemProgram.programId, isSigner: false, isWritable: false }, // システムプログラム
       ],
       programId,
-      data,
+      data: dataBuffer
     });
     
-    // トランザクションの作成
-    console.log('Creating transaction');
-    const transaction = new Transaction();
-    transaction.add(instruction);
+    // トランザクションにインストラクションを追加
+    const transaction = new Transaction().add(instruction);
     
-    try {
-      // 最新のブロックハッシュを取得して設定
-      console.log('Getting latest blockhash');
-      const { blockhash } = await connection.getLatestBlockhash();
-      console.log('Blockhash:', blockhash);
-      
-      transaction.recentBlockhash = blockhash;
-      transaction.feePayer = commissionerPubkey;
-      
-      console.log('Transaction created successfully');
-      return transaction;
-    } catch (blockHashError) {
-      console.error('Error getting blockhash:', blockHashError);
-      throw blockHashError;
-    }
+    // 最新のブロックハッシュを取得して設定
+    const { blockhash } = await connection.getLatestBlockhash();
+    console.log('Using blockhash:', blockhash);
+    
+    transaction.recentBlockhash = blockhash;
+    transaction.feePayer = commissionerPubkey;
+    
+    console.log('Transaction created successfully');
+    return transaction;
   } catch (error) {
     console.error('Error creating task transaction:', error);
-    // スタックトレースを含むより詳細なエラーメッセージ
     if (error instanceof Error) {
       console.error('Stack trace:', error.stack);
-      throw new Error(`Failed to create task transaction: ${error.message}`);
     }
-    throw error;
+    throw new Error(`Failed to create task transaction: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
