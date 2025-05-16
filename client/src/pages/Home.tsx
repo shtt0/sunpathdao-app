@@ -38,12 +38,12 @@ export default function Home() {
             {isConnected ? (
               <div className="flex justify-center flex-col sm:flex-row gap-4">
                 <Link href="/commissioner/dashboard">
-                  <Button className="px-8 py-3 text-base w-48">
+                  <Button className="px-8 py-3 text-base w-full sm:w-48">
                     Commission Tasks
                   </Button>
                 </Link>
                 <Link href="/driver/tasks">
-                  <Button variant="outline" className="px-8 py-3 text-base w-48">
+                  <Button variant="outline" className="px-8 py-3 text-base w-full sm:w-48">
                     Find Tasks
                   </Button>
                 </Link>
@@ -51,7 +51,7 @@ export default function Home() {
             ) : (
               <Button 
                 onClick={connectWallet}
-                className="px-8 py-3 text-base bg-[#309898] hover:bg-[#2a8585]"
+                className="px-8 py-3 text-base bg-[#309898] hover:bg-[#2a8585] w-full sm:w-auto safe-area-inset-bottom"
               >
                 <span className="material-icons mr-2">account_balance_wallet</span>
                 Join Our Mission
@@ -175,7 +175,7 @@ export default function Home() {
                 onClick={connectWallet}
                 variant="secondary" 
                 size="lg"
-                className="w-full px-8"
+                className="w-full px-8 py-3 safe-area-inset-bottom"
               >
                 <span className="material-icons mr-2">account_balance_wallet</span>
                 Join Our Mission
