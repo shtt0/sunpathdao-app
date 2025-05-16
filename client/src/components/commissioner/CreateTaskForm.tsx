@@ -116,62 +116,29 @@ export default function CreateTaskForm({ recreateTaskId }: CreateTaskFormProps) 
       
       setIsLockingFunds(true);
       
-      try {
-        // Create a payload for the task with proper type conversions
-        const taskData = {
-          ...formData,
-          // Convert rewardAmount to string as expected by server
-          rewardAmount: String(formData.rewardAmount),
-          // Convert expiresAt Date to ISO string - server will parse it
-          expiresAt: formData.expiresAt.toISOString(),
-          routeData: routeData,
-          commissionerWalletAddress: walletAddress,
-        };
-        
-        console.log('Submitting task with converted data:', taskData);
-        
-        // Calculate time in seconds from now to the expiry date
-        const now = new Date();
-        const expiryDate = new Date(formData.expiresAt);
-        const durationSeconds = Math.floor((expiryDate.getTime() - now.getTime()) / 1000);
-        
-        // Calculate reward amount in lamports (1 SOL = 1,000,000,000 lamports)
-        const rewardAmountLamports = Math.floor(formData.rewardAmount * 1000000000);
-        
-        // Generate a task ID based on the current timestamp
-        const taskId = Math.floor(Date.now() / 1000);
-        
-        // Create Solana wallet public key from wallet address
-        const walletPublicKey = new PublicKey(walletAddress);
-        
-        // Create a Solana transaction to lock the funds
-        console.log(`Creating task transaction with: taskId=${taskId}, reward=${rewardAmountLamports} lamports, duration=${durationSeconds} seconds`);
-        const transaction = await createTaskTransaction(
-          walletPublicKey,
-          taskId,
-          rewardAmountLamports,
-          durationSeconds
-        );
-        
-        // Sign and send the transaction
-        const signature = await signAndSendTransaction(transaction);
-        
-        console.log('Task creation transaction signature:', signature);
-        
-        // Add transaction signature to the task data
-        const taskDataWithTx = {
-          ...taskData,
-          blockchainTransactionId: signature,
-          blockchainTaskId: taskId,
-        };
-        
-        // 2. Submit the task to the server
-        return apiRequest('POST', `${API_ROUTES.TASKS}`, taskDataWithTx);
-      } catch (error) {
-        console.error('Error creating blockchain transaction:', error);
-        setIsLockingFunds(false);
-        throw error;
-      }
+      // Create a payload for the task with proper type conversions
+      const taskData = {
+        ...formData,
+        // Convert rewardAmount to string as expected by server
+        rewardAmount: String(formData.rewardAmount),
+        // Convert expiresAt Date to ISO string - server will parse it
+        expiresAt: formData.expiresAt.toISOString(),
+        routeData: routeData,
+        commissionerWalletAddress: walletAddress,
+      };
+      
+      console.log('Submitting task with converted data:', taskData);
+      
+      // 開発段階では、ブロックチェーンの統合はまだ完了していないことをユーザーに通知
+      toast({
+        title: '開発中の機能',
+        description: 'ブロックチェーン統合はまだ開発中です。現在はオフチェーンでタスクが作成されます。',
+        variant: 'default',
+      });
+      
+      // 2. 現時点ではブロックチェーンへの書き込みなしでタスクを登録
+      // 将来的にはブロックチェーントランザクションの成功確認後にタスクを登録する
+      return apiRequest('POST', `${API_ROUTES.TASKS}`, taskData);
     },
     onSuccess: (data) => {
       toast({

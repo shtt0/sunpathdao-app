@@ -165,32 +165,31 @@ export function WalletProvider({ children }: WalletProviderProps) {
         throw new Error('ウォレットが接続されていません。先にウォレットを接続してください。');
       }
       
-      // 開発環境用のスタブ実装
-      // 本番環境では、AppKitを使って実際にトランザクションに署名して送信する必要があります
       console.log('トランザクション内容:', transaction);
       
-      // AppKitがサポートする場合は、AppKitを使ってトランザクションを送信
-      // 注: 現在のReown AppKit実装ではこのメソッドが直接提供されていない可能性があります
-      // そのため、このブロックは実行されず、常にモック署名が使用される可能性があります
-      if (appKit && (appKit as any).signAndSendTransaction && 
-          typeof (appKit as any).signAndSendTransaction === 'function') {
-        try {
-          // AppKitを使ってトランザクションを送信（実際の実装はReown AppKitに依存）
-          const signature = await (appKit as any).signAndSendTransaction(transaction);
-          return typeof signature === 'string' ? signature : 'transaction-hash-' + Date.now().toString();
-        } catch (signError) {
-          console.error('AppKitでのトランザクション署名に失敗:', signError);
-          
-          // デモ環境用のモック署名生成
-          const mockSignature = 'mock-tx-' + Math.random().toString(36).substring(2, 15);
-          console.log('デモ用モックトランザクション署名を生成:', mockSignature);
-          return mockSignature;
-        }
-      } else {
-        // デモ環境用のモック署名生成
+      try {
+        // 実際の運用環境向け: AppKit SDKを使用してトランザクションに署名・送信
+        // 注: 現在はモック実装を使用
+        
+        // 本来はここでトランザクションに署名して送信する処理を実装
+        // たとえば、MagicLinkなどの外部サービスを使う場合:
+        // const signedTx = await magic.solana.signTransaction(transaction);
+        // const signature = await connection.sendRawTransaction(signedTx.serialize());
+        
+        // このデモ実装ではモック署名を返す
+        // 重要: 実際のプロダクション環境ではこの部分を実装する必要があります
         const mockSignature = 'mock-tx-' + Date.now().toString();
         console.log('デモ用モックトランザクション署名を生成:', mockSignature);
-        return mockSignature;
+        
+        // ここで重要な注意: 
+        // モックモードであることを明示的に示すエラーをスロー
+        throw new Error('デモモードでは実際のトランザクションは発生しません。実運用前に実装が必要です。');
+        
+        // 実際の実装では以下のようにトランザクション署名を返す
+        // return signature;
+      } catch (signError) {
+        console.error('トランザクション署名に失敗:', signError);
+        throw signError;
       }
     } catch (error) {
       console.error('トランザクションエラー:', error);
