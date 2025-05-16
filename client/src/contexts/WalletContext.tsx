@@ -13,7 +13,7 @@ interface WalletContextType {
   walletAddress: string | null;
   connectWallet: () => Promise<void>;
   disconnectWallet: () => void;
-  signAndSendTransaction: (transaction: any) => Promise<string>;
+  signAndSendTransaction: (transaction: Transaction) => Promise<string>;
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
