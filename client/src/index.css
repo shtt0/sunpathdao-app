@@ -88,6 +88,11 @@
 }
 
 @layer components {
+  /* iOS Safari specific styles */
+  .safe-area-inset-top {
+    padding-top: env(safe-area-inset-top, 0);
+  }
+  
   /* Map related styles */
   .map-container {
     @apply w-full h-96 rounded-lg bg-neutral-200 shadow-md overflow-hidden border border-border;
