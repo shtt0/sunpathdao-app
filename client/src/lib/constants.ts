@@ -5,6 +5,16 @@ export const API_ROUTES = {
   USERS: '/api/users',
 };
 
+// Solana constants
+export const SOLANA_CONSTANTS = {
+  NETWORK: process.env.NODE_ENV === 'production' ? 'mainnet-beta' : 'devnet',
+  RPC_URL: process.env.NODE_ENV === 'production' 
+    ? 'https://api.mainnet-beta.solana.com' 
+    : 'https://api.devnet.solana.com',
+  PROGRAM_ID: process.env.VITE_SOLANA_PROGRAM_ID || '3SUR2BvfpCrUR2pCzqkFuNGyzT2DqHeeF7RBh9KaYmFR', // サンプル値、実際のプログラムIDに置き換え必要
+  MIN_DEPOSIT_AMOUNT: 0.1, // コミッショナーに必要な最低デポジット量（SOL）
+};
+
 // Pagination
 export const ITEMS_PER_PAGE = 9;
 
