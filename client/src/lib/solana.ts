@@ -201,7 +201,8 @@ export async function acceptTaskTransaction(
     
     // Anchorのシリアライズ形式に合わせたデータバッファの作成
     // 8バイトのメソッド識別子(ディスクリミネーター)
-    const methodDiscriminator = new Uint8Array([13, 169, 94, 33, 114, 151, 103, 162]);
+    // "accept_task" の正しいディスクリミネーター
+    const methodDiscriminator = new Uint8Array([222, 196, 79, 165, 120, 30, 38, 120]);
     
     // 引数1: recipient (PublicKey) - 32バイト
     const recipientBytes = new Uint8Array(recipientPubkey.toBytes());
@@ -297,7 +298,8 @@ export async function rejectTaskTransaction(
     
     // Anchorのシリアライズ形式に合わせたデータバッファの作成
     // 8バイトのメソッド識別子(ディスクリミネーター)
-    const methodDiscriminator = new Uint8Array([102, 29, 22, 156, 33, 145, 230, 89]);
+    // "reject_task" の正しいディスクリミネーター
+    const methodDiscriminator = new Uint8Array([152, 59, 207, 37, 222, 254, 28, 106]);
     
     // IDLを確認すると引数は不要（空の配列）
     const dataBuffer = methodDiscriminator;
@@ -382,7 +384,8 @@ export async function reclaimTaskFundsTransaction(
     
     // Anchorのシリアライズ形式に合わせたデータバッファの作成
     // 8バイトのメソッド識別子(ディスクリミネーター)
-    const methodDiscriminator = new Uint8Array([86, 242, 51, 142, 83, 170, 42, 86]);
+    // "reclaim_task_funds" の正しいディスクリミネーター
+    const methodDiscriminator = new Uint8Array([117, 112, 75, 205, 124, 103, 96, 192]);
     
     // IDLを確認すると引数は不要（空の配列）
     const dataBuffer = methodDiscriminator;
@@ -456,8 +459,8 @@ export async function initializeAdminCounterTransaction(
     
     // Anchorのシリアライズ形式に合わせたデータバッファの作成
     // 8バイトのメソッド識別子(ディスクリミネーター)
-    // "initialize_admin_counter" という文字列から生成されるAnchorの標準ディスクリミネーター
-    const methodDiscriminator = new Uint8Array([205, 175, 155, 67, 177, 35, 150, 35]);
+    // "initialize_admin_counter" の正しいディスクリミネーター
+    const methodDiscriminator = new Uint8Array([75, 91, 216, 32, 21, 249, 169, 251]);
     
     // IDLを確認すると引数は不要（空の配列）
     
