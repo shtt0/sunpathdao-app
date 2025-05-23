@@ -307,9 +307,14 @@ export default function Dashboard() {
                 </div>
                 
                 {depositBalance < 3 && (
-                  <p className="mt-2 text-sm text-neutral-600">
-                    Deposit 3 SOL to activate your commissioner account and create tasks.
-                  </p>
+                  <div className="mt-2">
+                    <p className="text-sm text-red-600 font-medium mb-1">
+                      Note: Not required in test environment.
+                    </p>
+                    <p className="text-sm text-neutral-600">
+                      Deposit 3 SOL to activate your commissioner account and create tasks.
+                    </p>
+                  </div>
                 )}
                 
                 {withdrawRequestDate && (
@@ -322,21 +327,11 @@ export default function Dashboard() {
               <div className="mt-4 md:mt-0 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
                 {depositBalance < 3 ? (
                   <Button 
-                    disabled={isDepositing}
-                    onClick={handleDeposit}
-                    className="inline-flex items-center"
+                    disabled={true}
+                    className="inline-flex items-center opacity-50 cursor-not-allowed"
                   >
-                    {isDepositing ? (
-                      <>
-                        <span className="material-icons animate-spin mr-2 text-sm">sync</span>
-                        Depositing...
-                      </>
-                    ) : (
-                      <>
-                        <span className="material-icons mr-2 text-sm">account_balance_wallet</span>
-                        Deposit 3 SOL
-                      </>
-                    )}
+                    <span className="material-icons mr-2 text-sm">account_balance_wallet</span>
+                    Deposit 3 SOL
                   </Button>
                 ) : (
                   <>
