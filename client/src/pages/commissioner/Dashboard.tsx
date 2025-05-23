@@ -312,7 +312,7 @@ export default function Dashboard() {
                       Note: Not required in test environment.
                     </p>
                     <p className="text-sm text-neutral-600">
-                      Deposit 3 SOL to activate your commissioner account and create tasks.
+                      Deposit 3 SOL to activate your commissioner account and create tasks. A 7-day waiting period is required for withdrawals.
                     </p>
                   </div>
                 )}
