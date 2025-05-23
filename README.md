@@ -15,7 +15,7 @@ easily onboarding to crypto, and funding safer roads globally.
 
 # On-Chain Program `sunpath` Test Overview
 
-This document outlines the summary of end-to-end tests performed on the Solana Devnet for the `sunpath` program (Program ID: `38E1zgevXVshKemafYmkJF1YvDJqG2NVzeX4TCYS8TbL`). Each test validates a specific user workflow and program instruction's behavior.
+This document outlines the summary of end-to-end tests performed on the Solana Devnet for the `sunpath` program (Program ID: [`38E1zgevXVshKemafYmkJF1YvDJqG2NVzeX4TCYS8TbL`](https://explorer.solana.com/address/38E1zgevXVshKemafYmkJF1YvDJqG2NVzeX4TCYS8TbL?cluster=devnet)). Each test validates a specific user workflow and program instruction's behavior.
 
 ## 0. Essential Initializations
 
@@ -29,7 +29,7 @@ These operations are prerequisites for running the other test workflows.
   2. A new `Config` PDA is created and initialized with the provided parameters.
 - **Test Script:** Executed via the Solana Playground UI's test tab.
 - **Key Verifications:** The `Config` account is created, and its settings are correctly populated.
-  - _(Note: While a direct log for this instruction from the final test sequence is omitted for brevity, the existence and use of the Config PDA `4Rp93kN5mVhUdj2xoKJqW3rNLx584DbhARM91AZ7cYbg` in subsequent successful tests confirm its prior successful execution for this Program ID.)_
+  - _(Note: While a direct log for this instruction from the final test sequence is omitted for brevity, the existence and use of the Config PDA [`4Rp93kN5mVhUdj2xoKJqW3rNLx584DbhARM91AZ7cYbg`](https://explorer.solana.com/address/4Rp93kN5mVhUdj2xoKJqW3rNLx584DbhARM91AZ7cYbg?cluster=devnet) in subsequent successful tests confirm its prior successful execution for this Program ID.)_
 
 ### b. Admin Action Counter Initialization (`initializeAdminCounter`)
 
@@ -174,15 +174,3 @@ src/
 - Node.js v20.18.0 or higher
 - Solana CLI
 - Anchor Framework
-
-## License
-
-MIT
-
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
