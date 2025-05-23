@@ -94,11 +94,13 @@ export function WalletProvider({ children }: WalletProviderProps) {
           // 両方の実装を用意しておきます
           
           try {
-            // AppKitからウォレットアドレスを取得する試み
-            // 実際のReown AppKit APIに合わせて調整してください
+            // AppKitからウォレットアドレスを取得する
+            // Solanaアダプタを使用して正しいアドレスを取得
             const addressInfo = await (appKit.adapter as any)?.getAddress?.();
-            const actualAddress = addressInfo?.address || 
-                                "AYhSMbtBBct6BVa75UnhF2DJG3JKTVXDFmeGznD1ij74"; // フォールバックアドレス（実際の実装では不要）
+            if (!addressInfo?.address) {
+              throw new Error('ウォレットアドレスを取得できませんでした');
+            }
+            const actualAddress = addressInfo.address;
             
             // ステートを更新
             setWalletAddress(actualAddress);
@@ -111,17 +113,12 @@ export function WalletProvider({ children }: WalletProviderProps) {
           } catch (addrError) {
             console.error('アドレス取得エラー:', addrError);
             
-            // フォールバック: エラーが発生した場合のみデモアドレスを使用
-            const demoAddress = "AYhS" + Date.now().toString().slice(-8); 
+            // エラーが発生した場合は接続失敗として処理
+            setWalletStatus('disconnected');
+            setWalletAddress(null);
             
-            // ステートを更新
-            setWalletAddress(demoAddress);
-            setWalletStatus('connected');
-            
-            // ユーザー登録
-            await registerUser(demoAddress);
-            
-            console.log('フォールバックデモアドレスを使用:', demoAddress);
+            // エラーメッセージを表示
+            alert('ウォレット接続に失敗しました。もう一度お試しください。');
           }
           
         } catch (error) {
