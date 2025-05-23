@@ -5,7 +5,7 @@ import { API_ROUTES } from '@/lib/constants';
 import { useWallet } from '@/contexts/WalletContext';
 import { PublicKey } from '@solana/web3.js';
 import { formatSOL } from '@/lib/utils';
-import { getSolBalance, createTransferTransaction } from '@/lib/solana';
+import { getSolBalance, createTransferTransaction, initializeAdminCounterTransaction } from '@/lib/solana';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -271,22 +271,24 @@ export default function Dashboard() {
       // Create initialize admin counter transaction
       const walletPublicKey = new PublicKey(walletAddress);
       
-      // In a real implementation, you would create the InitializeAdminCounter transaction here
-      // For now, we'll simulate the process
+      // Create the actual blockchain transaction
+      const transaction = await initializeAdminCounterTransaction(walletPublicKey);
       
-      // Simulating blockchain transaction delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Sign and send the transaction
+      const signature = await signAndSendTransaction(transaction);
+      
+      console.log('Initialize admin counter transaction signature:', signature);
       
       toast({
-        title: 'Admin Counter Initialized',
-        description: 'The admin counter has been successfully initialized.',
+        title: 'Account Activated Successfully',
+        description: `Transaction ID: ${signature}`,
       });
       
     } catch (error) {
       console.error('Error initializing admin counter:', error);
       toast({
-        title: 'Initialization Failed',
-        description: error instanceof Error ? error.message : 'Failed to initialize admin counter',
+        title: 'Account Activation Failed',
+        description: error instanceof Error ? error.message : 'Failed to activate account',
         variant: 'destructive',
       });
     } finally {

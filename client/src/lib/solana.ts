@@ -447,3 +447,67 @@ export async function reclaimTaskFundsTransaction(
     throw new Error(`Failed to create reclaimTaskFunds transaction: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
+
+// Initialize Admin Counter用のトランザクションを作成する
+export async function initializeAdminCounterTransaction(
+  adminPubkey: PublicKey     // 管理者のウォレットアドレス
+): Promise<Transaction> {
+  try {
+    console.log(`Creating initialize admin counter transaction:
+      Admin: ${adminPubkey.toString()}`);
+    
+    // プログラムIDをPublicKeyに変換
+    const programId = new PublicKey(SOLANA_CONSTANTS.PROGRAM_ID);
+    console.log('Program ID:', programId.toString());
+    
+    // Anchorのシリアライズ形式に合わせたデータバッファの作成
+    // 8バイトのメソッド識別子(ディスクリミネーター)
+    // "initialize_admin_counter" という文字列から生成されるAnchorの標準ディスクリミネーター
+    const methodDiscriminator = new Uint8Array([205, 175, 155, 67, 177, 35, 150, 35]);
+    
+    // IDLを確認すると引数は不要（空の配列）
+    
+    // 全てのバッファを連結（このケースではディスクリミネーターのみ）
+    const dataBuffer = methodDiscriminator;
+    
+    console.log('Data buffer created:', dataBuffer.length);
+    
+    // 管理アクションカウンターのPDAを生成
+    const adminActionSeedPrefix = new TextEncoder().encode("admin_action");
+    const [adminActionCounterPubkey] = PublicKey.findProgramAddressSync(
+      [adminActionSeedPrefix],
+      programId
+    );
+    console.log('Admin Action Counter PDA:', adminActionCounterPubkey.toString());
+    
+    // Anchor IDLに基づいたアカウント構造でインストラクションを作成
+    const instruction = new TransactionInstruction({
+      keys: [
+        { pubkey: adminActionCounterPubkey, isSigner: false, isWritable: true },  // 管理アクションカウンター (PDA)
+        { pubkey: adminPubkey, isSigner: true, isWritable: true },                // 管理者（署名者・支払者）
+        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },  // システムプログラム
+      ],
+      programId,
+      data: dataBuffer
+    });
+    
+    // トランザクションにインストラクションを追加
+    const transaction = new Transaction().add(instruction);
+    
+    // 最新のブロックハッシュを取得して設定
+    const { blockhash } = await connection.getLatestBlockhash();
+    console.log('Using blockhash:', blockhash);
+    
+    transaction.recentBlockhash = blockhash;
+    transaction.feePayer = adminPubkey;
+    
+    console.log('Initialize admin counter transaction created successfully');
+    return transaction;
+  } catch (error) {
+    console.error('Error creating initializeAdminCounter transaction:', error);
+    if (error instanceof Error) {
+      console.error('Stack trace:', error.stack);
+    }
+    throw new Error(`Failed to create initializeAdminCounter transaction: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
