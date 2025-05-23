@@ -185,12 +185,14 @@ export async function createTaskTransaction(
 
 // タスク承認用のトランザクションを作成する
 export async function acceptTaskTransaction(
-  driverPubkey: PublicKey,     // タスク実行者のウォレットアドレス
-  taskId: number               // 承認するタスクのID
+  consignerPubkey: PublicKey,   // タスク作成者のウォレットアドレス（署名者）
+  recipientPubkey: PublicKey,   // 受取人のウォレットアドレス
+  taskId: number                // 承認するタスクのID
 ): Promise<Transaction> {
   try {
     console.log(`Creating accept task transaction:
-      Driver: ${driverPubkey.toString()}
+      Consigner: ${consignerPubkey.toString()}
+      Recipient: ${recipientPubkey.toString()}
       Task ID: ${taskId}`);
     
     // プログラムIDをPublicKeyに変換
@@ -199,12 +201,10 @@ export async function acceptTaskTransaction(
     
     // Anchorのシリアライズ形式に合わせたデータバッファの作成
     // 8バイトのメソッド識別子(ディスクリミネーター)
-    // "accept_task" という文字列から生成されるAnchorの標準ディスクリミネーター
     const methodDiscriminator = new Uint8Array([13, 169, 94, 33, 114, 151, 103, 162]);
     
-    // 引数1: recipient (PublicKey)
-    // ドライバーのPublicKeyを渡す
-    const recipientBytes = new Uint8Array(driverPubkey.toBytes());
+    // 引数1: recipient (PublicKey) - 32バイト
+    const recipientBytes = new Uint8Array(recipientPubkey.toBytes());
     
     // 全てのバッファを連結
     const dataBuffer = new Uint8Array(
@@ -218,7 +218,7 @@ export async function acceptTaskTransaction(
     
     console.log('Data buffer created:', dataBuffer.length);
     
-    // タスクアカウントのPDAを生成 (シードは "task" + taskId のバイナリ表現)
+    // タスクアカウントのPDAを生成
     const taskSeedPrefix = new TextEncoder().encode("task");
     const taskIdBytes = new Uint8Array(8);
     const taskIdView = new DataView(taskIdBytes.buffer);
@@ -246,15 +246,15 @@ export async function acceptTaskTransaction(
     );
     console.log('Admin Action Counter PDA:', adminActionCounterPubkey.toString());
     
-    // Anchor IDLに基づいたアカウント構造でインストラクションを作成
+    // IDLに基づいたアカウント構造でインストラクションを作成
     const instruction = new TransactionInstruction({
       keys: [
-        { pubkey: taskAccountPubkey, isSigner: false, isWritable: true },         // タスクアカウント (PDA)
-        { pubkey: driverPubkey, isSigner: true, isWritable: true },               // 実行者（署名者）
-        { pubkey: driverPubkey, isSigner: false, isWritable: true },              // 受取人アカウント（実行者自身）
-        { pubkey: configPubkey, isSigner: false, isWritable: false },             // プログラム設定
-        { pubkey: adminActionCounterPubkey, isSigner: false, isWritable: true },  // 管理アクションカウンター
-        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },  // システムプログラム
+        { pubkey: taskAccountPubkey, isSigner: false, isWritable: true },         // taskAccount
+        { pubkey: consignerPubkey, isSigner: true, isWritable: true },            // consignerWallet
+        { pubkey: recipientPubkey, isSigner: false, isWritable: true },           // recipientAccount
+        { pubkey: configPubkey, isSigner: false, isWritable: false },             // config
+        { pubkey: adminActionCounterPubkey, isSigner: false, isWritable: true },  // adminActionCounter
+        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },  // systemProgram
       ],
       programId,
       data: dataBuffer
@@ -268,7 +268,7 @@ export async function acceptTaskTransaction(
     console.log('Using blockhash:', blockhash);
     
     transaction.recentBlockhash = blockhash;
-    transaction.feePayer = driverPubkey;
+    transaction.feePayer = consignerPubkey;
     
     console.log('Accept task transaction created successfully');
     return transaction;
@@ -283,12 +283,12 @@ export async function acceptTaskTransaction(
 
 // タスク拒否用のトランザクションを作成する
 export async function rejectTaskTransaction(
-  commissionerPubkey: PublicKey, // タスク作成者のウォレットアドレス
+  consignerPubkey: PublicKey,   // タスク作成者のウォレットアドレス（署名者）
   taskId: number                // 拒否するタスクのID
 ): Promise<Transaction> {
   try {
     console.log(`Creating reject task transaction:
-      Commissioner: ${commissionerPubkey.toString()}
+      Consigner: ${consignerPubkey.toString()}
       Task ID: ${taskId}`);
     
     // プログラムIDをPublicKeyに変換
@@ -297,17 +297,14 @@ export async function rejectTaskTransaction(
     
     // Anchorのシリアライズ形式に合わせたデータバッファの作成
     // 8バイトのメソッド識別子(ディスクリミネーター)
-    // "reject_task" という文字列から生成されるAnchorの標準ディスクリミネーター
     const methodDiscriminator = new Uint8Array([102, 29, 22, 156, 33, 145, 230, 89]);
     
     // IDLを確認すると引数は不要（空の配列）
-    
-    // 全てのバッファを連結（このケースではディスクリミネーターのみ）
     const dataBuffer = methodDiscriminator;
     
     console.log('Data buffer created:', dataBuffer.length);
     
-    // タスクアカウントのPDAを生成 (シードは "task" + taskId のバイナリ表現)
+    // タスクアカウントのPDAを生成
     const taskSeedPrefix = new TextEncoder().encode("task");
     const taskIdBytes = new Uint8Array(8);
     const taskIdView = new DataView(taskIdBytes.buffer);
@@ -335,14 +332,14 @@ export async function rejectTaskTransaction(
     );
     console.log('Admin Action Counter PDA:', adminActionCounterPubkey.toString());
     
-    // Anchor IDLに基づいたアカウント構造でインストラクションを作成
+    // IDLに基づいたアカウント構造でインストラクションを作成
     const instruction = new TransactionInstruction({
       keys: [
-        { pubkey: taskAccountPubkey, isSigner: false, isWritable: true },         // タスクアカウント (PDA)
-        { pubkey: commissionerPubkey, isSigner: true, isWritable: true },         // 委託者（署名者）
-        { pubkey: configPubkey, isSigner: false, isWritable: false },             // プログラム設定
-        { pubkey: adminActionCounterPubkey, isSigner: false, isWritable: true },  // 管理アクションカウンター
-        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },  // システムプログラム
+        { pubkey: taskAccountPubkey, isSigner: false, isWritable: true },         // taskAccount
+        { pubkey: consignerPubkey, isSigner: true, isWritable: true },            // consignerWallet
+        { pubkey: configPubkey, isSigner: false, isWritable: false },             // config
+        { pubkey: adminActionCounterPubkey, isSigner: false, isWritable: true },  // adminActionCounter
+        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },  // systemProgram
       ],
       programId,
       data: dataBuffer
@@ -356,7 +353,7 @@ export async function rejectTaskTransaction(
     console.log('Using blockhash:', blockhash);
     
     transaction.recentBlockhash = blockhash;
-    transaction.feePayer = commissionerPubkey;
+    transaction.feePayer = consignerPubkey;
     
     console.log('Reject task transaction created successfully');
     return transaction;
@@ -371,12 +368,12 @@ export async function rejectTaskTransaction(
 
 // 期限切れタスクの資金回収用のトランザクションを作成する
 export async function reclaimTaskFundsTransaction(
-  commissionerPubkey: PublicKey, // タスク作成者のウォレットアドレス
+  consignerPubkey: PublicKey,   // タスク作成者のウォレットアドレス（署名者）
   taskId: number                // 資金を回収するタスクのID
 ): Promise<Transaction> {
   try {
     console.log(`Creating reclaim task funds transaction:
-      Commissioner: ${commissionerPubkey.toString()}
+      Consigner: ${consignerPubkey.toString()}
       Task ID: ${taskId}`);
     
     // プログラムIDをPublicKeyに変換
@@ -385,17 +382,14 @@ export async function reclaimTaskFundsTransaction(
     
     // Anchorのシリアライズ形式に合わせたデータバッファの作成
     // 8バイトのメソッド識別子(ディスクリミネーター)
-    // "reclaim_task_funds" という文字列から生成されるAnchorの標準ディスクリミネーター
-    const methodDiscriminator = new Uint8Array([45, 173, 66, 44, 98, 117, 162, 170]);
+    const methodDiscriminator = new Uint8Array([86, 242, 51, 142, 83, 170, 42, 86]);
     
     // IDLを確認すると引数は不要（空の配列）
-    
-    // 全てのバッファを連結（このケースではディスクリミネーターのみ）
     const dataBuffer = methodDiscriminator;
     
     console.log('Data buffer created:', dataBuffer.length);
     
-    // タスクアカウントのPDAを生成 (シードは "task" + taskId のバイナリ表現)
+    // タスクアカウントのPDAを生成
     const taskSeedPrefix = new TextEncoder().encode("task");
     const taskIdBytes = new Uint8Array(8);
     const taskIdView = new DataView(taskIdBytes.buffer);
@@ -415,13 +409,13 @@ export async function reclaimTaskFundsTransaction(
     );
     console.log('Config Account PDA:', configPubkey.toString());
     
-    // Anchor IDLに基づいたアカウント構造でインストラクションを作成
+    // IDLに基づいたアカウント構造でインストラクションを作成
     const instruction = new TransactionInstruction({
       keys: [
-        { pubkey: taskAccountPubkey, isSigner: false, isWritable: true },      // タスクアカウント (PDA)
-        { pubkey: commissionerPubkey, isSigner: true, isWritable: true },      // 委託者（署名者）
-        { pubkey: configPubkey, isSigner: false, isWritable: false },          // プログラム設定
-        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false }, // システムプログラム
+        { pubkey: taskAccountPubkey, isSigner: false, isWritable: true },         // taskAccount
+        { pubkey: consignerPubkey, isSigner: true, isWritable: true },            // consignerWallet
+        { pubkey: configPubkey, isSigner: false, isWritable: false },             // config
+        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },  // systemProgram
       ],
       programId,
       data: dataBuffer

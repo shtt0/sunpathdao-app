@@ -7,6 +7,7 @@ import { acceptTaskTransaction } from '@/lib/solana';
 
 interface AcceptTaskButtonProps {
   taskId: number;
+  recipientWalletAddress: string; // 受取人のウォレットアドレスを追加
   onSuccess?: (transactionId: string) => void;
   onError?: (error: Error) => void;
   className?: string;
