@@ -15,6 +15,7 @@ interface AcceptTaskButtonProps {
 
 export default function AcceptTaskButton({
   taskId,
+  recipientWalletAddress,
   onSuccess,
   onError,
   className = ''
@@ -37,11 +38,13 @@ export default function AcceptTaskButton({
 
     try {
       // ウォレットアドレスをPublicKeyに変換
-      const walletPublicKey = new PublicKey(walletAddress);
+      const consignerPublicKey = new PublicKey(walletAddress);
+      const recipientPublicKey = new PublicKey(recipientWalletAddress);
       
       // タスク承認トランザクションを生成
       const transaction = await acceptTaskTransaction(
-        walletPublicKey,
+        consignerPublicKey,
+        recipientPublicKey,
         taskId
       );
       
