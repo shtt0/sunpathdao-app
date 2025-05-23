@@ -469,10 +469,10 @@ export async function initializeAdminCounterTransaction(
     
     console.log('Data buffer created:', dataBuffer.length);
     
-    // 管理アクションカウンターのPDAを生成
-    const adminActionSeedPrefix = new TextEncoder().encode("admin_action");
+    // 管理アクションカウンターのPDAを生成（テストファイルと同じ方法）
+    const adminCounterSeedPrefix = new TextEncoder().encode("admin_counter");
     const [adminActionCounterPubkey] = PublicKey.findProgramAddressSync(
-      [adminActionSeedPrefix],
+      [adminCounterSeedPrefix, adminPubkey.toBytes()],
       programId
     );
     console.log('Admin Action Counter PDA:', adminActionCounterPubkey.toString());
