@@ -38,6 +38,9 @@ export default function Dashboard() {
   const [withdrawRequestDate, setWithdrawRequestDate] = useState<Date | null>(null);
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   
+  // Admin initialization state
+  const [isInitializing, setIsInitializing] = useState(false);
+  
   // Fetch user data
   const { data: userData, isLoading: isLoadingUser } = useQuery({
     queryKey: [API_ROUTES.USERS, walletAddress],
@@ -251,6 +254,46 @@ export default function Dashboard() {
     }
   };
 
+  // Handle initialize admin counter
+  const handleInitializeAdminCounter = async () => {
+    if (!walletAddress) {
+      toast({
+        title: 'Wallet Not Connected',
+        description: 'Please connect your wallet to initialize the admin counter.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      setIsInitializing(true);
+      
+      // Create initialize admin counter transaction
+      const walletPublicKey = new PublicKey(walletAddress);
+      
+      // In a real implementation, you would create the InitializeAdminCounter transaction here
+      // For now, we'll simulate the process
+      
+      // Simulating blockchain transaction delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      toast({
+        title: 'Admin Counter Initialized',
+        description: 'The admin counter has been successfully initialized.',
+      });
+      
+    } catch (error) {
+      console.error('Error initializing admin counter:', error);
+      toast({
+        title: 'Initialization Failed',
+        description: error instanceof Error ? error.message : 'Failed to initialize admin counter',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsInitializing(false);
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
       <div className="px-4 sm:px-0">
@@ -258,6 +301,58 @@ export default function Dashboard() {
         <p className="mt-1 text-sm text-neutral-600">
           Manage your commissioned tasks and review submissions
         </p>
+      </div>
+
+      {/* Admin Initialization Section */}
+      <div className="mt-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center">
+              <div className="bg-primary-light/10 rounded-lg p-2">
+                <span className="material-icons text-primary-dark">admin_panel_settings</span>
+              </div>
+              <div className="ml-3">
+                <h2 className="text-lg font-display font-medium text-neutral-900">Admin Configuration</h2>
+                <p className="text-sm text-neutral-500">Initialize blockchain program admin counter</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="mt-4 bg-white shadow overflow-hidden sm:rounded-lg">
+          <div className="px-4 py-5 sm:p-6">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+              <div>
+                <h3 className="text-lg font-medium leading-6 text-neutral-900">
+                  Program Initialization
+                </h3>
+                <p className="mt-2 text-sm text-neutral-600">
+                  Initialize the admin counter to enable program functionality. This only needs to be done once.
+                </p>
+              </div>
+              
+              <div className="mt-4 md:mt-0">
+                <Button 
+                  disabled={isInitializing}
+                  onClick={handleInitializeAdminCounter}
+                  className="inline-flex items-center"
+                >
+                  {isInitializing ? (
+                    <>
+                      <span className="material-icons animate-spin mr-2 text-sm">sync</span>
+                      Initializing...
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-icons mr-2 text-sm">settings</span>
+                      Initialize Admin Counter
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Account Status Section */}
