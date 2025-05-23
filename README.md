@@ -15,7 +15,9 @@ easily onboarding to crypto, and funding safer roads globally.
 
 # On-Chain Program `sunpath` Test Overview
 
-This document outlines the summary of end-to-end tests performed on the Solana Devnet for the `sunpath` program (Program ID: [`38E1zgevXVshKemafYmkJF1YvDJqG2NVzeX4TCYS8TbL`](https://explorer.solana.com/address/38E1zgevXVshKemafYmkJF1YvDJqG2NVzeX4TCYS8TbL?cluster=devnet)). Each test validates a specific user workflow and program instruction's behavior.
+This document outlines the summary of end-to-end tests performed on the Solana Devnet for the `sunpath` program (Program ID: <a href="https://explorer.solana.com/address/38E1zgevXVshKemafYmkJF1YvDJqG2NVzeX4TCYS8TbL?cluster=devnet" target="_blank" rel="noopener noreferrer">`38E1zgevXVshKemafYmkJF1YvDJqG2NVzeX4TCYS8TbL`</a>). Each test validates a specific user workflow and program instruction's behavior.
+
+> **Note:** To run these tests, you need to import the `sunpath` program into [Solana Playground](https://beta.solpg.io/) and execute the test scripts from there. The tests are designed to run on Solana Devnet.
 
 ## 0. Essential Initializations
 
@@ -29,7 +31,7 @@ These operations are prerequisites for running the other test workflows.
   2. A new `Config` PDA is created and initialized with the provided parameters.
 - **Test Script:** Executed via the Solana Playground UI's test tab.
 - **Key Verifications:** The `Config` account is created, and its settings are correctly populated.
-  - _(Note: While a direct log for this instruction from the final test sequence is omitted for brevity, the existence and use of the Config PDA [`4Rp93kN5mVhUdj2xoKJqW3rNLx584DbhARM91AZ7cYbg`](https://explorer.solana.com/address/4Rp93kN5mVhUdj2xoKJqW3rNLx584DbhARM91AZ7cYbg?cluster=devnet) in subsequent successful tests confirm its prior successful execution for this Program ID.)_
+  - _(Note: While a direct log for this instruction from the final test sequence is omitted for brevity, the existence and use of the Config PDA <a href="https://explorer.solana.com/address/4Rp93kN5mVhUdj2xoKJqW3rNLx584DbhARM91AZ7cYbg?cluster=devnet" target="_blank" rel="noopener noreferrer">`4Rp93kN5mVhUdj2xoKJqW3rNLx584DbhARM91AZ7cYbg`</a> in subsequent successful tests confirm its prior successful execution for this Program ID.)_
 
 ### b. Admin Action Counter Initialization (`initializeAdminCounter`)
 
@@ -40,7 +42,7 @@ These operations are prerequisites for running the other test workflows.
 - **Test Script:** `test_step1_initialize_counter.js`
 - **Key Verifications:** The `AdminActionCounter` account is created, and both counts are initialized to zero.
 - **Example Run (for wallet `4A8gjRE...`):**
-  - Transaction ID: [`5tcNzA2EP7Knvt6yChQrQwoQk7BnZJQYCGXr7VyDjqkD5ne3XDyX3a5nFhbKrfmoNSKnCZffZoEsnkDzNRKAZpK7`](https://explorer.solana.com/tx/5tcNzA2EP7Knvt6yChQrQwoQk7BnZJQYCGXr7VyDjqkD5ne3XDyX3a5nFhbKrfmoNSKnCZffZoEsnkDzNRKAZpK7?cluster=devnet)
+  - Transaction ID: <a href="https://explorer.solana.com/tx/5tcNzA2EP7Knvt6yChQrQwoQk7BnZJQYCGXr7VyDjqkD5ne3XDyX3a5nFhbKrfmoNSKnCZffZoEsnkDzNRKAZpK7?cluster=devnet" target="_blank" rel="noopener noreferrer">`5tcNzA2EP7Knvt6yChQrQwoQk7BnZJQYCGXr7VyDjqkD5ne3XDyX3a5nFhbKrfmoNSKnCZffZoEsnkDzNRKAZpK7`</a>
 
 ## 1. Task Creation and Acceptance Workflow
 
@@ -55,8 +57,8 @@ These operations are prerequisites for running the other test workflows.
 - **Test Script:** `test_step2_accept_workflow.js`
 - **Key Verifications:** Task status changes to `Approved`; `accept_count` increments correctly. The program logic handles the lamport transfer.
 - **Example Run (for wallet `4A8gjRE...`):**
-  - `createTask` Transaction ID: [`5Sw4jCWQX9EkzB2yEEymDeRcZ7TszLaapwvS28TMdDxPQmjooNczaoXFh6TKaqpZMWriWguvKYxHFdXRKpF5kyWU`](https://explorer.solana.com/tx/5Sw4jCWQX9EkzB2yEEymDeRcZ7TszLaapwvS28TMdDxPQmjooNczaoXFh6TKaqpZMWriWguvKYxHFdXRKpF5kyWU?cluster=devnet)
-  - `acceptTask` Transaction ID: [`TAar9TRWi4Vo2BKBRMq3LmQgQGao3LBrCHjn6GpMEmayvzmL8DJuAXNZj7LVwg6UhbLqoNfoSUVs4wDuG2PdHBi`](https://explorer.solana.com/tx/TAar9TRWi4Vo2BKBRMq3LmQgQGao3LBrCHjn6GpMEmayvzmL8DJuAXNZj7LVwg6UhbLqoNfoSUVs4wDuG2PdHBi?cluster=devnet)
+  - `createTask` Transaction ID: <a href="https://explorer.solana.com/tx/5Sw4jCWQX9EkzB2yEEymDeRcZ7TszLaapwvS28TMdDxPQmjooNczaoXFh6TKaqpZMWriWguvKYxHFdXRKpF5kyWU?cluster=devnet" target="_blank" rel="noopener noreferrer">`5Sw4jCWQX9EkzB2yEEymDeRcZ7TszLaapwvS28TMdDxPQmjooNczaoXFh6TKaqpZMWriWguvKYxHFdXRKpF5kyWU`</a>
+  - `acceptTask` Transaction ID: <a href="https://explorer.solana.com/tx/TAar9TRWi4Vo2BKBRMq3LmQgQGao3LBrCHjn6GpMEmayvzmL8DJuAXNZj7LVwg6UhbLqoNfoSUVs4wDuG2PdHBi?cluster=devnet" target="_blank" rel="noopener noreferrer">`TAar9TRWi4Vo2BKBRMq3LmQgQGao3LBrCHjn6GpMEmayvzmL8DJuAXNZj7LVwg6UhbLqoNfoSUVs4wDuG2PdHBi`</a>
   - Result: `acceptCount` incremented to `1`.
 
 ## 2. Task Creation and Rejection Workflow
@@ -70,8 +72,8 @@ These operations are prerequisites for running the other test workflows.
 - **Test Script:** `test_step3_reject_workflow.js`
 - **Key Verifications:** Task status changes to `Rejected`; `reject_count` increments correctly.
 - **Example Run (for wallet `4A8gjRE...`, showing cumulative count increase):**
-  - `createTask` Transaction ID: [`4KPhkFp3NPksFKnaZNcHZLrFxBQnfcrR1Kjuz8TMRgn94PuCx8Srn17hhCPMJJAW3Z3K72nxdFhpmfPzRyqSLCTP`](https://explorer.solana.com/tx/4KPhkFp3NPksFKnaZNcHZLrFxBQnfcrR1Kjuz8TMRgn94PuCx8Srn17hhCPMJJAW3Z3K72nxdFhpmfPzRyqSLCTP?cluster=devnet)
-  - `rejectTask` Transaction ID: [`3bHNQJze7hci4qN9nnqs6fBkvCApxWo5xk61rAh5cQjd5rdyA31ifhvXzybU1RagMqJSach7pQBkPn1oktBrseBm`](https://explorer.solana.com/tx/3bHNQJze7hci4qN9nnqs6fBkvCApxWo5xk61rAh5cQjd5rdyA31ifhvXzybU1RagMqJSach7pQBkPn1oktBrseBm?cluster=devnet)
+  - `createTask` Transaction ID: <a href="https://explorer.solana.com/tx/4KPhkFp3NPksFKnaZNcHZLrFxBQnfcrR1Kjuz8TMRgn94PuCx8Srn17hhCPMJJAW3Z3K72nxdFhpmfPzRyqSLCTP?cluster=devnet" target="_blank" rel="noopener noreferrer">`4KPhkFp3NPksFKnaZNcHZLrFxBQnfcrR1Kjuz8TMRgn94PuCx8Srn17hhCPMJJAW3Z3K72nxdFhpmfPzRyqSLCTP`</a>
+  - `rejectTask` Transaction ID: <a href="https://explorer.solana.com/tx/3bHNQJze7hci4qN9nnqs6fBkvCApxWo5xk61rAh5cQjd5rdyA31ifhvXzybU1RagMqJSach7pQBkPn1oktBrseBm?cluster=devnet" target="_blank" rel="noopener noreferrer">`3bHNQJze7hci4qN9nnqs6fBkvCApxWo5xk61rAh5cQjd5rdyA31ifhvXzybU1RagMqJSach7pQBkPn1oktBrseBm`</a>
   - Result: `rejectCount` (which was `3` before this specific test's `rejectTask` call due to prior tests in the session) incremented to `4`.
 
 ## 3. Reclaiming Funds from a Rejected Task Workflow
@@ -86,7 +88,7 @@ These operations are prerequisites for running the other test workflows.
 - **Test Script:** `test_step4_reclaim_workflow.js`
 - **Key Verifications:** Task status changes to `Reclaimed`; `reward_amount_locked` becomes 0.
 - **Example Run (for wallet `4A8gjRE...`):**
-  - `reclaimTaskFunds` Transaction ID: [`4qyWQz4e5rbn1HGAgfcq6ExpaVbgWKR4zNXWo19MUBYcUwTvPCFvichrQqsE5vjEUoJ8RvWzCfq5BK5kpaRXAMf`](https://explorer.solana.com/tx/4qyWQz4e5rbn1HGAgfcq6ExpaVbgWKR4zNXWo19MUBYcUwTvPCFvichrQqsE5vjEUoJ8RvWzCfq5BK5kpaRXAMf?cluster=devnet)
+  - `reclaimTaskFunds` Transaction ID: <a href="https://explorer.solana.com/tx/4qyWQz4e5rbn1HGAgfcq6ExpaVbgWKR4zNXWo19MUBYcUwTvPCFvichrQqsE5vjEUoJ8RvWzCfq5BK5kpaRXAMf?cluster=devnet" target="_blank" rel="noopener noreferrer">`4qyWQz4e5rbn1HGAgfcq6ExpaVbgWKR4zNXWo19MUBYcUwTvPCFvichrQqsE5vjEUoJ8RvWzCfq5BK5kpaRXAMf`</a>
 
 ## 4. Reclaiming Funds from an Expired Task Workflow
 
@@ -101,7 +103,7 @@ These operations are prerequisites for running the other test workflows.
 - **Test Script:** `test_step5_expire_reclaim_workflow.js`
 - **Key Verifications:** Task status changes to `Reclaimed`; `reward_amount_locked` becomes 0. The `accept_count` and `reject_count` on the consigner's `AdminActionCounter` remain unchanged from their values before this workflow.
 - **Example Run (for wallet `4A8gjRE...`):**
-  - `reclaimTaskFunds` Transaction ID: [`oKNSY8tbCV2gr8JXWgWfY4QsHumBGCGDQtrxJuqet2Na8zdFYFjNXSYF3uSAsPzfDuWEkMtYijPTqJkzMEo19Qv`](https://explorer.solana.com/tx/oKNSY8tbCV2gr8JXWgWfY4QsHumBGCGDQtrxJuqet2Na8zdFYFjNXSYF3uSAsPzfDuWEkMtYijPTqJkzMEo19Qv?cluster=devnet)
+  - `reclaimTaskFunds` Transaction ID: <a href="https://explorer.solana.com/tx/oKNSY8tbCV2gr8JXWgWfY4QsHumBGCGDQtrxJuqet2Na8zdFYFjNXSYF3uSAsPzfDuWEkMtYijPTqJkzMEo19Qv?cluster=devnet" target="_blank" rel="noopener noreferrer">`oKNSY8tbCV2gr8JXWgWfY4QsHumBGCGDQtrxJuqet2Na8zdFYFjNXSYF3uSAsPzfDuWEkMtYijPTqJkzMEo19Qv`</a>
   - Result: `acceptCount` (was `2`) and `rejectCount` (was `5`) remained unchanged after this test.
 
 ---
