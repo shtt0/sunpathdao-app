@@ -345,7 +345,7 @@ export default function Dashboard() {
                   ) : (
                     <>
                       <span className="material-icons mr-2 text-sm">settings</span>
-                      Initialize Admin Counter
+                      Activate Account
                     </>
                   )}
                 </Button>
@@ -356,22 +356,22 @@ export default function Dashboard() {
       </div>
 
       {/* Account Status Section */}
-      <div className="mt-6">
+      <div className="mt-6 opacity-60">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between">
           <div className="flex-1 min-w-0">
             <div className="flex items-center">
-              <div className="bg-primary-light/10 rounded-lg p-2">
-                <span className="material-icons text-primary-dark">account_balance</span>
+              <div className="bg-gray-100 rounded-lg p-2">
+                <span className="material-icons text-gray-500">account_balance</span>
               </div>
               <div className="ml-3">
-                <h2 className="text-lg font-display font-medium text-neutral-900">Account Status</h2>
-                <p className="text-sm text-neutral-500">Manage your deposit for task commissioning</p>
+                <h2 className="text-lg font-display font-medium text-gray-600">Account Status</h2>
+                <p className="text-sm text-gray-400">Manage your deposit for task commissioning</p>
               </div>
             </div>
           </div>
         </div>
         
-        <div className="mt-4 bg-white shadow overflow-hidden sm:rounded-lg">
+        <div className="mt-4 bg-gray-50 shadow-sm overflow-hidden sm:rounded-lg">
           <div className="px-4 py-5 sm:p-6">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between">
               <div>
